@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "sinatra"
+gem 'sinatra-contrib'
+gem "sinatra-cross_origin"
+gem "puma"
+gem "rollbar"
+
+group :development do
+  gem 'pry'
+end
