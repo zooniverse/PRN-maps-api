@@ -31,6 +31,10 @@ module PrnMaps
       json(S3Proxy.new.event_manifest(params[:event_name]))
     end
 
+    get '/layers/:event_name' do
+      json(S3Proxy.new.event_layers(params[:event_name]))
+    end
+
     get '/*' do
       json({ health: "ok", version: VERSION })
     end

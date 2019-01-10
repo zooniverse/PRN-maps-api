@@ -1,8 +1,10 @@
+# frozen_string_literal: true
 module PrnMaps
   class S3Proxy
-    BUCKET = 'planetary-response-network'.freeze
-    MANIFEST_PREFIX = 'manifests'.freeze
+    BUCKET = 'planetary-response-network'
+    MANIFEST_PREFIX = 'manifests'
     MANIFEST_NAME_REGEX = /.+\/(.+).json/
+    LAYER_NAME_REGEX = /.+\/(.+)\..+/
 
     attr_reader :s3
 
@@ -22,7 +24,7 @@ module PrnMaps
         manifest_objects = bucket.objects(prefix: MANIFEST_PREFIX)
         manifest_objects.each do |obj|
           events << {
-            name: manifest_path(obj.key),
+            name: manifest_name(obj.key),
             manifest_s3_path: "#{BUCKET}/#{obj.key}"
           }
         end
@@ -35,14 +37,49 @@ module PrnMaps
       JSON.parse(obj.get.body.read)
     end
 
+    def event_layers(event_name)
+      [].tap do |layers|
+        layer_objects = bucket.objects(
+          prefix: "events/#{event_name}/layers/",
+          delimiter: '/'
+        )
+        layer_objects.each do |obj|
+          layers << {
+            name: layer_name(obj.key),
+            manifest_s3_path: "#{BUCKET}/#{obj.key}"
+          }
+        end
+      end
+    end
+
+    def event_layers(event_name)
+      [].tap do |layers|
+        layer_objects = bucket.objects(
+          prefix: "events/#{event_name}/layers/",
+          delimiter: '/'
+        )
+        layer_objects.each do |obj|
+          layers << {
+            name: layer_name(obj.key),
+            layer_s3_path: "#{BUCKET}/#{obj.key}"
+          }
+        end
+      end
+    end
+
+
     private
 
     def bucket
       @bucket ||= s3.bucket(BUCKET)
     end
 
-    def manifest_path(path)
+    def manifest_name(path)
       MANIFEST_NAME_REGEX.match(path)[1]
+    end
+
+    def layer_name(path)
+      LAYER_NAME_REGEX.match(path)[1]
     end
   end
 end
