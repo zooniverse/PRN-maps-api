@@ -10,6 +10,10 @@ module PrnMaps
       ENV.fetch('RACK_ENV') || 'development'
     end
 
+    def self.local?
+      environment == 'development'
+    end
+
     def self.rollbar_token
       ENV['ROLLBAR_TOKEN']
     end

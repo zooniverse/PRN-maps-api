@@ -2,18 +2,29 @@ require 'sinatra'
 require "sinatra/json"
 require 'sinatra/cross_origin'
 require 'rollbar/middleware/sinatra'
+require_relative 's3_proxy'
 
 module PrnMaps
   class Api < Sinatra::Base
     VERSION = '0.0.1'.freeze
 
     use Rollbar::Middleware::Sinatra
-
     register Sinatra::CrossOrigin
 
+    configure :production, :staging, :development do
+      enable :logging
+    end
+
+    before do
+      cross_origin allow_origin: cors_origins, allowmethods: [:get]
+
+      content_type 'application/json'
+
+      # other before actions here like auth
+    end
+
     get '/events' do
-      cross_origin :allow_origin => cors_origins, allowmethods: [:get]
-      json []
+      json(list_known_events)
     end
 
     get '/*' do
@@ -23,6 +34,10 @@ module PrnMaps
     def cors_origins
       cors_origins = ENV["CORS_ORIGINS"] || '([a-z0-9-]+\.zooniverse\.org)'
       /^https?:\/\/#{cors_origins}(:\d+)?$/
+    end
+
+    def list_known_events
+      S3Proxy.new.known_events
     end
   end
 end

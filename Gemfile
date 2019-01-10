@@ -7,6 +7,7 @@ gem 'sinatra-contrib'
 gem "sinatra-cross_origin"
 gem "puma"
 gem "rollbar"
+gem 'aws-sdk-s3', '~> 1.30'
 
 group :development do
   gem 'pry'
