@@ -11,15 +11,20 @@ Each Event comprises the following steps:
 0. Raw classification data is collated and archived to a known s3 path
 0. IBCC code is run over the collated data and with all the layer results published to known s3 paths
 
-This API will fetch the event information stored in known s3 locations. This information will be used by the mapping UI interface https://github.com/zooniverse/prn-maps for visualizing the results of tPRN event
+This API will fetch the event information stored in known s3 locations and returned as JSON data.
+
+This information will be used by the mapping UI interface https://github.com/zooniverse/prn-maps for visualizing the results of tPRN event
 
 # Routes
 
 `/events`
-  + List all known tPRN event manifests available in s3
+  + List all known tPRN event manifests available in s3, including the manifest name & path
 
-`/events/${event_name}`
-  + Show the JSON manifest metadata for the known event
+`/manifests/${event_name}`
+  + Show the manifest metadata for a known event name
+
+`/layers/${event_name}`
+  + Show the layers
 
 # Get started
 

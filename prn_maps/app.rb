@@ -27,8 +27,8 @@ module PrnMaps
       json(S3Proxy.new.events)
     end
 
-    get '/events/manifests/:id' do
-      json(S3Proxy.new.event_manifest(params[:id]))
+    get '/manifests/:event_name' do
+      json(S3Proxy.new.event_manifest(params[:event_name]))
     end
 
     get '/*' do

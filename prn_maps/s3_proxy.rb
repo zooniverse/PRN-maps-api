@@ -1,6 +1,9 @@
 module PrnMaps
   class S3Proxy
+    BUCKET = 'planetary-response-network'.freeze
     MANIFEST_PREFIX = 'manifests'.freeze
+    MANIFEST_NAME_REGEX = /.+\/(.+).json/
+
     attr_reader :s3
 
     def initialize
@@ -19,15 +22,15 @@ module PrnMaps
         manifest_objects = bucket.objects(prefix: MANIFEST_PREFIX)
         manifest_objects.each do |obj|
           events << {
-            name: event_name_from_manifest_path(obj.key),
-            manifest_path: obj.key
+            name: manifest_path(obj.key),
+            manifest_s3_path: "#{BUCKET}/#{obj.key}"
           }
         end
       end
     end
 
-    def event_manifest(manifest_id)
-      manifest_path = "#{MANIFEST_PREFIX}/#{manifest_id}"
+    def event_manifest(event_name)
+      manifest_path = "#{MANIFEST_PREFIX}/#{event_name}.json"
       obj = bucket.object(manifest_path)
       JSON.parse(obj.get.body.read)
     end
@@ -35,13 +38,11 @@ module PrnMaps
     private
 
     def bucket
-      @bucket ||= s3.bucket(
-        'planetary-response-network'
-      )
+      @bucket ||= s3.bucket(BUCKET)
     end
 
-    def event_name_from_manifest_path(manifest_path)
-      manifest_path.split("/").last
+    def manifest_path(path)
+      MANIFEST_NAME_REGEX.match(path)[1]
     end
   end
 end
