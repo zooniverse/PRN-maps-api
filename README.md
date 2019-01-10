@@ -24,7 +24,7 @@ This information will be used by the mapping UI interface https://github.com/zoo
   + Show the manifest metadata for a known event name
 
 `/layers/${event_name}`
-  + Show the layers
+  + Show the data layers for a known event name
 
 # Get started
 
