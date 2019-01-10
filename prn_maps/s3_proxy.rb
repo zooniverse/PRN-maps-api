@@ -34,8 +34,13 @@ module PrnMaps
 
     def event_manifest(event_name)
       manifest_path = "#{MANIFEST_PREFIX}/#{event_name}.json"
-      obj = bucket.object(manifest_path)
-      JSON.parse(obj.get.body.read)
+      begin
+        obj = bucket.object(manifest_path)
+        result = JSON.parse(obj.get.body.read)
+      rescue Aws::S3::Errors::NoSuchKey
+        result = { error: "Failed to find the event name manifest"}
+      end
+      result
     end
 
     def event_layers(event_name)
