@@ -1,0 +1,9 @@
+prn_maps_api:
+  dockerfile: Dockerfile.dev
+  build: .
+  volumes:
+    - ./:/app
+  ports:
+    - 3000:3000
+  environment:
+    RACK_ENV: development

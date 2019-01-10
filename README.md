@@ -23,4 +23,9 @@ This API will fetch the event information stored in known s3 locations. This inf
 
 # Get started
 
-`bundle exec puma` to run the API server in development mode
+Using docker and docker-compose
+`docker-compose up`
+
+Using your own ruby install
+`bundle install`
+`bundle exec puma -C docker/puma.rb` to run the API server in development mode
