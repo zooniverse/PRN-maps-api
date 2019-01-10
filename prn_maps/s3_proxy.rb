@@ -5,6 +5,7 @@ module PrnMaps
     MANIFEST_PREFIX = 'manifests'
     MANIFEST_NAME_REGEX = /.+\/(.+).json/
     LAYER_NAME_REGEX = /.+\/(.+)\..+/
+    S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
 
@@ -61,7 +62,8 @@ module PrnMaps
         layer_objects.each do |obj|
           layers << {
             name: layer_name(obj.key),
-            layer_s3_path: "#{BUCKET}/#{obj.key}"
+            layer_s3_path: "#{BUCKET}/#{obj.key}",
+            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
           }
         end
       end
