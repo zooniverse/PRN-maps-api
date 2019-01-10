@@ -24,7 +24,12 @@ module PrnMaps
     end
 
     get '/events' do
-      json(list_known_events)
+      json(S3Proxy.new.known_events)
+    end
+
+    get '/events/manifests/:id' do
+      manifest_path = "manifests/#{params[:id]}"
+      json(S3Proxy.new.known_event(manifest_path))
     end
 
     get '/*' do
@@ -34,10 +39,6 @@ module PrnMaps
     def cors_origins
       cors_origins = ENV["CORS_ORIGINS"] || '([a-z0-9-]+\.zooniverse\.org)'
       /^https?:\/\/#{cors_origins}(:\d+)?$/
-    end
-
-    def list_known_events
-      S3Proxy.new.known_events
     end
   end
 end
