@@ -54,7 +54,9 @@ module PrnMaps
   class Pending < Api
 
     use Rack::Auth::Basic, "Protected Area" do |username, password|
-      username == 'foo' && password == 'bar'
+
+      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
+      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
     end
 
     get '/layers/:event_name' do
