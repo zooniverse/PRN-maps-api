@@ -17,14 +17,24 @@ This information will be used by the mapping UI interface https://github.com/zoo
 
 # Routes
 
-`/events`
+##### Public end points
+
+GET `/events`
   + List all known tPRN event manifests available in s3, including the manifest name & path
 
-`/manifests/${event_name}`
+GET `/manifests/${event_name}`
   + Show the manifest metadata for a known event name
 
-`/layers/${event_name}`
+GET `/layers/${event_name}`
   + Show the data layers for a known event name
+
+##### Protected end points (basic auth headers required)
+
+GET `/pending/layers/${event_name}`
+  + Show the pending data layers for a known event name
+
+POST `/pending/layers/${event_name}/approve`
+  + Approve and publish all the pending data layers for a known event name.
 
 # Get started
 
