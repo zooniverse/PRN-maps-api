@@ -64,7 +64,7 @@ module PrnMaps
     # This will approve all the pending layers
     # Find out if we need the ability to approve each one?
     post '/layers/:event_name/approve' do
-      # ADD an s3 file move from pending to approved path
+      # TODO add s3 file move from pending to approved path
     end
   end
 end
