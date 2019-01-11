@@ -13,4 +13,7 @@ Rollbar.configure do |config|
   config.use_async    = use_async
 end
 
-run PrnMaps::Api
+run Rack::URLMap.new({
+  "/" => PrnMaps::Public,
+  "/pending" => PrnMaps::Pending
+})

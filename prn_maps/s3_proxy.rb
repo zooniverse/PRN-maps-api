@@ -44,18 +44,11 @@ module PrnMaps
     end
 
     def approved_event_layers(event_name)
-      [].tap do |layers|
-        layer_objects = bucket.objects(
-          prefix: "events/#{event_name}/layers/approved/",
-          delimiter: '/'
-        )
-        layer_objects.each do |obj|
-          layers << {
-            name: layer_name(obj.key),
-            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
-          }
-        end
-      end
+      get_event_layers(event_name, 'approved')
+    end
+
+    def pending_event_layers(event_name)
+      get_event_layers(event_name, 'pending')
     end
 
     private
@@ -70,6 +63,21 @@ module PrnMaps
 
     def layer_name(path)
       LAYER_NAME_REGEX.match(path)[1]
+    end
+
+    def get_event_layers(event_name, path_suffix)
+      [].tap do |layers|
+        layer_objects = bucket.objects(
+          prefix: "events/#{event_name}/layers/#{path_suffix}/",
+          delimiter: '/'
+        )
+        layer_objects.each do |obj|
+          layers << {
+            name: layer_name(obj.key),
+            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
+          }
+        end
+      end
     end
   end
 end
