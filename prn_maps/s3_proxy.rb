@@ -43,10 +43,10 @@ module PrnMaps
       result
     end
 
-    def event_layers(event_name)
+    def approved_event_layers(event_name)
       [].tap do |layers|
         layer_objects = bucket.objects(
-          prefix: "events/#{event_name}/layers/",
+          prefix: "events/#{event_name}/layers/approved/",
           delimiter: '/'
         )
         layer_objects.each do |obj|
@@ -57,23 +57,6 @@ module PrnMaps
         end
       end
     end
-
-    def event_layers(event_name)
-      [].tap do |layers|
-        layer_objects = bucket.objects(
-          prefix: "events/#{event_name}/layers/",
-          delimiter: '/'
-        )
-        layer_objects.each do |obj|
-          layers << {
-            name: layer_name(obj.key),
-            layer_s3_path: "#{BUCKET}/#{obj.key}",
-            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
-          }
-        end
-      end
-    end
-
 
     private
 
