@@ -50,7 +50,10 @@ module PrnMaps
           delimiter: '/'
         )
         layer_objects.each do |obj|
-          layers << { name: layer_name(obj.key) }
+          layers << {
+            name: layer_name(obj.key),
+            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
+          }
         end
       end
     end
