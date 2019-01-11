@@ -50,10 +50,7 @@ module PrnMaps
           delimiter: '/'
         )
         layer_objects.each do |obj|
-          layers << {
-            name: layer_name(obj.key),
-            manifest_s3_path: "#{BUCKET}/#{obj.key}"
-          }
+          layers << { name: layer_name(obj.key) }
         end
       end
     end
