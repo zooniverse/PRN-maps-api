@@ -20,7 +20,7 @@ This information will be used by the mapping UI interface https://github.com/zoo
 ##### Public end points
 
 GET `/events`
-  + List all known tPRN event manifests available in s3, including the manifest name & path
+  + List all known tPRN event manifests available in s3, including the manifest name and URL for retrieval via HTTPS
 
 GET `/manifests/${event_name}`
   + Show the manifest metadata for a known event name

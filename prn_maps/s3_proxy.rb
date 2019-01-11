@@ -26,7 +26,7 @@ module PrnMaps
         manifest_objects.each do |obj|
           events << {
             name: manifest_name(obj.key),
-            manifest_s3_path: "#{BUCKET}/#{obj.key}"
+            url: bucket_url_generator(obj.key)
           }
         end
       end
@@ -65,6 +65,10 @@ module PrnMaps
       LAYER_NAME_REGEX.match(path)[1]
     end
 
+    def bucket_url_generator(key)
+      "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{key}"
+    end
+
     def get_event_layers(event_name, path_suffix)
       [].tap do |layers|
         layer_objects = bucket.objects(
@@ -74,7 +78,7 @@ module PrnMaps
         layer_objects.each do |obj|
           layers << {
             name: layer_name(obj.key),
-            url: "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{obj.key}"
+            url: bucket_url_generator(obj.key)
           }
         end
       end
