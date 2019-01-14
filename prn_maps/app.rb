@@ -28,18 +28,45 @@ module PrnMaps
       /^https?:\/\/#{cors_origins}(:\d+)?$/
     end
 
+    def options_req
+      cors_origin = request.env.key?('HTTP_ORIGIN')
+      cors_method = request.env.key?('HTTP_ACCESS_CONTROL_REQUEST_METHOD')
+      cors_headers = request.env.key?('HTTP_ACCESS_CONTROL_REQUEST_HEADERS')
+      valid_preflight = cors_origin && cors_method && cors_headers
+
+      if valid_preflight
+        200
+      else
+        # https://github.com/hapijs/hapi/issues/2868#issuecomment-150315812
+        # seems to be a take on the spec i agree with
+        404
+      end
+    end
+
     def s3_proxy
       @s3_proxy ||= S3Proxy.new
     end
   end
 
   class Public < Api
+    options '/events' do
+      options_req
+    end
+
     get '/events' do
       json(s3_proxy.events)
     end
 
+    options '/manifests/:event_name' do
+      options_req
+    end
+
     get '/manifests/:event_name' do
       json(s3_proxy.event_manifest(params[:event_name]))
+    end
+
+    options '/layers/:event_name' do
+      options_req
     end
 
     get '/layers/:event_name' do
@@ -59,8 +86,16 @@ module PrnMaps
       password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
     end
 
+    options '/layers/:event_name' do
+      options_req
+    end
+
     get '/layers/:event_name' do
       json(s3_proxy.pending_event_layers(params[:event_name]))
+    end
+
+    options '/layers/:event_name/approve' do
+      options_req
     end
 
     # This will approve all the pending layers
