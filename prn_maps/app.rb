@@ -24,7 +24,7 @@ module PrnMaps
     private
 
     def cors_origins
-      cors_origins = ENV["CORS_ORIGINS"] || '([a-z0-9-]+\.zooniverse\.org|prn-maps\.planetary-response-network\.org)'
+      cors_origins = ENV["CORS_ORIGINS"] || '([a-z0-9-\.]+\.zooniverse\.org|prn-maps\.planetary-response-network\.org)'
       /^https?:\/\/#{cors_origins}(:\d+)?$/
     end
 
