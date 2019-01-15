@@ -114,10 +114,9 @@ module PrnMaps
       options_req
     end
 
-    # This will approve all the pending layers
-    # Find out if we need the ability to approve each one?
+    # This moves all the pending layers to approve event bucket path
     post '/layers/:event_name/approve' do
-      # TODO add s3 file move from pending to approved path
+      json(s3_proxy.approve_pending_event_layers(params[:event_name]))
     end
   end
 end

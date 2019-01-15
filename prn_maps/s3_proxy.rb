@@ -4,7 +4,7 @@ module PrnMaps
     BUCKET = 'planetary-response-network'
     MANIFEST_PREFIX = 'manifests'
     MANIFEST_NAME_REGEX = /.+\/(.+).json/
-    LAYER_NAME_REGEX = /.+\/(.+)\..+/
+    LAYER_NAME_REGEX = /.+\/(.+)\.(.+)/
     S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
@@ -47,6 +47,28 @@ module PrnMaps
       get_event_layers(event_name, 'pending')
     end
 
+    def approve_pending_event_layers(event_name)
+      bucket_path_prefix = "events/#{event_name}/layers"
+      approved_bucket_path_prefix = "#{bucket_path_prefix}/approved"
+      [].tap do |layers|
+        pending_objects = bucket.objects(
+          prefix: "#{bucket_path_prefix}/pending/",
+          delimiter: '/'
+        )
+        pending_objects.each do |obj|
+          move_target_key = "#{approved_bucket_path_prefix}/#{layer_name_with_extension(obj.key)}"
+          obj.move_to(
+            bucket: BUCKET,
+            key: move_target_key
+          )
+          layers << {
+            name: layer_name(move_target_key),
+            url: bucket_url_generator(move_target_key)
+          }
+        end
+      end
+    end
+
     private
 
     def bucket
@@ -61,10 +83,16 @@ module PrnMaps
       LAYER_NAME_REGEX.match(path)[1]
     end
 
+    def layer_name_with_extension(path)
+      layer_name_match = LAYER_NAME_REGEX.match(path)
+      "#{layer_name_match[1]}.#{layer_name_match[2]}"
+    end
+
     def bucket_url_generator(key)
       "https://#{BUCKET}.#{S3_URL_SUFFIX}/#{key}"
     end
 
+    # TODO: add fragment caching here to avoid hitting s3 all the time
     def get_event_layers(event_name, path_suffix)
       [].tap do |layers|
         layer_objects = bucket.objects(
