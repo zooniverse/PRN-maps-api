@@ -86,7 +86,18 @@ module PrnMaps
 
   class Pending < Api
 
-    use Rack::Auth::Basic, "Protected Area" do |username, password|
+    class OptionsBasicAuth < Rack::Auth::Basic
+      def call(env)
+        request = Rack::Request.new(env)
+        if request.options?
+          @app.call(env)
+        else
+          super # perform auth
+        end
+      end
+    end
+
+    use OptionsBasicAuth, "Protected Area" do |username, password|
       username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
       password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
     end
