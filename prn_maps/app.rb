@@ -7,6 +7,7 @@ require_relative 's3_proxy'
 module PrnMaps
   class Api < Sinatra::Base
     VERSION = '0.0.1'.freeze
+    CORS_DEFAULTS = '([a-z0-9-\.]+\.zooniverse\.org|prn-maps\.planetaryresponsenetwork\.org)'
 
     use Rollbar::Middleware::Sinatra
     register Sinatra::CrossOrigin
@@ -24,8 +25,11 @@ module PrnMaps
     private
 
     def cors_origins
-      cors_origins = ENV["CORS_ORIGINS"] || '([a-z0-9-\.]+\.zooniverse\.org|prn-maps\.planetary-response-network\.org)'
-      /^https?:\/\/#{cors_origins}(:\d+)?$/
+      if env_cors = ENV["CORS_ORIGINS"]
+        env_cors
+      else
+        /^https?:\/\/#{CORS_DEFAULTS}(:\d+)?$/
+      end
     end
 
     def options_req
@@ -35,6 +39,7 @@ module PrnMaps
       valid_preflight = cors_origin && cors_method && cors_headers
 
       if valid_preflight
+        headers
         200
       else
         # https://github.com/hapijs/hapi/issues/2868#issuecomment-150315812
@@ -81,9 +86,9 @@ module PrnMaps
   class Pending < Api
 
     use Rack::Auth::Basic, "Protected Area" do |username, password|
-
-      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
-      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+      # username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
+      # password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+      true
     end
 
     options '/layers/:event_name' do
