@@ -7,7 +7,7 @@ require_relative 's3_proxy'
 module PrnMaps
   class Api < Sinatra::Base
     VERSION = '0.0.1'.freeze
-    CORS_DEFAULTS = '([a-z0-9-\.]+\.zooniverse\.org|prn-maps\.planetaryresponsenetwork\.org)'
+    CORS_DEFAULTS = '([a-z0-9\-\.]+\.zooniverse\.org|prn-maps\.planetaryresponsenetwork\.org)'
 
     use Rollbar::Middleware::Sinatra
     register Sinatra::CrossOrigin
