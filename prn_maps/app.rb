@@ -25,6 +25,7 @@ module PrnMaps
     private
 
     def cors_origins
+      # not allowed a regex in CORS_ORIGINS as is
       if env_cors = ENV["CORS_ORIGINS"]
         env_cors
       else
@@ -86,9 +87,8 @@ module PrnMaps
   class Pending < Api
 
     use Rack::Auth::Basic, "Protected Area" do |username, password|
-      # username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
-      # password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
-      true
+      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
+      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
     end
 
     options '/layers/:event_name' do
