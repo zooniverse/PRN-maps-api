@@ -9,6 +9,11 @@ gem "puma"
 gem "rollbar"
 gem 'aws-sdk-s3', '~> 1.30'
 
-group :development do
+group :development, :test do
   gem 'pry'
+end
+
+group :test do
+ gem 'minitest'
+ gem 'rack-test'
 end

@@ -3,6 +3,7 @@ require "sinatra/json"
 require 'sinatra/cross_origin'
 require 'rollbar/middleware/sinatra'
 require_relative 's3_proxy'
+require_relative 'options_basic_auth'
 
 module PrnMaps
   class Api < Sinatra::Base
@@ -85,18 +86,6 @@ module PrnMaps
   end
 
   class Pending < Api
-
-    class OptionsBasicAuth < Rack::Auth::Basic
-      def call(env)
-        request = Rack::Request.new(env)
-        if request.options?
-          @app.call(env)
-        else
-          super # perform auth
-        end
-      end
-    end
-
     use OptionsBasicAuth, "Protected Area" do |username, password|
       username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
       password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
@@ -116,6 +105,22 @@ module PrnMaps
 
     # This moves all the pending layers to approve event bucket path
     post '/layers/:event_name/approve' do
+      json(s3_proxy.approve_pending_event_layers(params[:event_name]))
+    end
+  end
+
+  class Upload < Api
+    use OptionsBasicAuth, "Protected Area" do |username, password|
+      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
+      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+    end
+
+    options '/layers/:event_name' do
+      options_req
+    end
+
+    # take all the submitted files and
+    post '/layers/:event_name' do
       json(s3_proxy.approve_pending_event_layers(params[:event_name]))
     end
   end
