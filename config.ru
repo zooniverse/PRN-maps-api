@@ -15,5 +15,6 @@ end
 
 run Rack::URLMap.new({
   "/" => PrnMaps::Public,
-  "/pending" => PrnMaps::Pending
+  "/pending" => PrnMaps::Pending,
+  "/upload" => PrnMaps::Upload
 })

@@ -110,6 +110,10 @@ module PrnMaps
   end
 
   class Upload < Api
+    ACCPETED_TYPES = {
+      layer: "text/csv",
+      metadata: 'application/json'
+    }
     use OptionsBasicAuth, "Protected Area" do |username, password|
       username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
       password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
@@ -119,9 +123,43 @@ module PrnMaps
       options_req
     end
 
-    # take all the submitted files and
+    # upload the submitted layer files to s3
     post '/layers/:event_name' do
-      json(s3_proxy.approve_pending_event_layers(params[:event_name]))
+
+# ensure each file is of an accepted type
+# ensure that we have at least 1 csv and 1 json metadata file
+      errors = []
+      unless metadata_upload = params[:metadata]
+        errors << "You must specify a metadata file"
+      end
+      unless layer_uploads = params[:layers]
+        errors << "You must specify at least one layer file"
+      end
+      if errors.length > 0
+        return [400, json({ errors: errors })]
+      end
+
+      # TODO: do some validation checking on the uploaded files
+      # does the metadata file correlate correctly to the
+      # uploaded layer files
+      #
+      # does the metadata file have to conform to a set schema?
+
+      uploaded_layers = []
+      layer_uploads.each do |layer|
+        if layer['type'] == ACCPETED_TYPES[:layer]
+          # TODO: actually put these files using S3 Proxy
+          uploaded_layers << layer['filename']
+        end
+      end
+
+      if metadata_upload['type'] == ACCPETED_TYPES[:metadata]
+        # TODO: actually put this files using S3 Proxy
+        uploaded_metadata = metadata_upload['filename']
+      end
+
+      result = { layers: uploaded_layers, metadata: uploaded_metadata }
+      [201, json(result)]
     end
   end
 end
