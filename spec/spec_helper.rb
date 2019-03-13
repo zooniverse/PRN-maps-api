@@ -6,4 +6,4 @@ require 'minitest/focus'
 require 'rack/test'
 require 'pry'
 
-require_relative '../prn_maps/app.rb'
+require_relative '../prn_maps/upload.rb'

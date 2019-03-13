@@ -2,8 +2,10 @@
 
 Bundler.require
 
-require './prn_maps/app.rb'
 require './prn_maps/config.rb'
+require './prn_maps/public.rb'
+require './prn_maps/pending.rb'
+require './prn_maps/upload.rb'
 
 require 'pry' if PrnMaps::Config.local?
 
