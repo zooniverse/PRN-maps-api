@@ -17,10 +17,6 @@ module PrnMaps
       }
     end
 
-    def self.required_metadata_keys
-      @required_metadata_keys ||= %w[file_name created_at]
-    end
-
     options '/layers/:event_name' do
       options_req
     end
@@ -33,8 +29,11 @@ module PrnMaps
       # TODO: do some validation checking on the uploaded files
       # does the metadata file correlate correctly to the
       # uploaded layer files
-      errors = validate_metadata_file
-      return [422, json(errors: errors)] unless errors.empty?
+      validator = MetadataValidator.new(params[:metadata], params[:layers])
+      unless validator.valid?
+        return [422, json(errors: validator.errors)]
+      end
+
 
       if params[:metadata]['type'] == self.class.accepted_types[:metadata]
         # TODO: actually put this files using S3 Proxy
@@ -70,27 +69,75 @@ module PrnMaps
       end
     end
 
-    def validate_metadata_file
-      [].tap do |errors|
-        metadata_json['layers'].each_with_index do |layer_upload, layer_num|
-          if (layer_error = validate_layer_metadata(layer_upload, layer_num))
-            errors << layer_error
-          end
-        end
-      rescue JSON::ParserError => e
-        errors << e.message
+    class MetadataValidator
+      attr_reader :metadata_upload, :layers_upload
+
+      def self.required_keys
+        @required_keys ||= %w[file_name created_at]
       end
-    end
 
-    def metadata_json
-      @metadata_json ||= JSON.parse(params[:metadata][:tempfile].read)
-    end
+      def initialize(metadata_upload, layers_upload)
+        @metadata_upload = metadata_upload
+        @layers_upload = layers_upload
+        @errors = []
+      end
 
-    def validate_layer_metadata(layer_upload, layer_num)
-      missing_metadata = self.class.required_metadata_keys - layer_upload.keys
-      return if missing_metadata.empty?
+      def valid?
+        # validate_layer_counts(layer_metadata, layer_num)
 
-      "Layer: #{layer_num}, missing attributes: #{missing_metadata.join(',')}"
+        metadata_layers.each_with_index do |layer_metadata, layer_num|
+          validate_layer_metadata(layer_metadata, layer_num)
+
+          # validate the layer metadata describes an uploaded file
+          layer_filename = layer_metadata['file_name']
+          next unless layer_filename
+
+          layer_file = layers_upload.detect do |layer_upload|
+            layer_upload['filename'] == layer_filename
+          end
+          # found the layer file so we are all good
+          next if layer_file
+
+          # whoops, report that error
+          @errors << layer_error_msg(
+            layer_num,
+            "lists missing layer file: #{layer_filename}"
+          )
+        end
+
+        @errors.empty?
+      end
+
+      def errors
+        @errors.map { |error| "Invalid metadata - #{error}" }
+      end
+
+      private
+
+      def metadata_layers
+        @metadata_layers ||= metadata_json.fetch('layers', [])
+      end
+
+      def metadata_json
+        JSON.parse(metadata_upload[:tempfile].read)
+      rescue JSON::ParserError
+        @errors << 'please lint your JSON file'
+        {}
+      end
+
+      def validate_layer_metadata(layer_metadata, layer_num)
+        missing_metadata = self.class.required_keys - layer_metadata.keys
+        return if missing_metadata.empty?
+
+        @errors << layer_error_msg(
+          layer_num,
+          "missing attributes: #{missing_metadata.join(',')}"
+        )
+      end
+
+      def layer_error_msg(layer_num, msg)
+        "Layer: #{layer_num} #{msg}"
+      end
     end
   end
 end

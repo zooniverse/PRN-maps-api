@@ -10,7 +10,7 @@ describe 'uploading layer files' do
   end
 
   def files_payload(layers, metadata)
-    layer_files = layers.each do |layer|
+    layer_files = layers.map do |layer|
       Rack::Test::UploadedFile.new(layer, 'text/csv')
     end
     {
@@ -78,25 +78,16 @@ describe 'uploading layer files' do
     end
 
     it 'should accept one layer file' do
-      payload = {
-        layers: [
-          Rack::Test::UploadedFile.new(
-            'spec/test_files/layer_1.csv',
-            'text/csv'
-          )
-        ],
-        metadata: Rack::Test::UploadedFile.new(
-          'spec/test_files/layer_1_metadata.json',
-          'application/json'
-        )
-      }
+      payload = files_payload(
+        ['spec/test_files/layer_1.csv'],
+        'spec/test_files/layer_1_metadata.json'
+      )
       post '/layers/test_layer', payload
       last_response.status.must_equal(201)
       result = { layers: ['layer_1.csv'], metadata: 'layer_1_metadata.json' }
       last_response.body.must_equal(result.to_json)
     end
 
-    focus
     describe 'when metadata upload is an invalid' do
       it 'should respond with useful schema errors' do
         payload = files_payload(
@@ -106,19 +97,53 @@ describe 'uploading layer files' do
         post '/layers/test_layer', payload
         last_response.status.must_equal(422)
         last_response.body.must_equal(
-          error_formatting('Layer: 0, missing attributes: file_name')
+          error_formatting(
+            'Invalid metadata - Layer: 0 missing attributes: file_name'
+          )
+        )
+      end
+
+      it 'should handle an invalid json file' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
+          'spec/test_files/layer_1.csv'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting('Invalid metadata - please lint your JSON file')
         )
       end
 
       it 'should ensure the metadata file describes the layers' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],
+          'spec/test_files/invalid_layer_metadata.json'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+
+        last_response.body.must_equal(
+          error_formatting(
+            'Invalid metadata - ' \
+            'Layer: 0 lists missing layer file: incorret_layer.csv'
+          )
+        )
+      end
+
+      it 'should ensure the metadata file describes only the layers' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
           'spec/test_files/invalid_layers_metadata.json'
         )
         post '/layers/test_layer', payload
         last_response.status.must_equal(422)
+
         last_response.body.must_equal(
-          error_formatting('Layer: 0, missing attributes: file_name')
+          error_formatting(
+            'Invalid metadata - Layer: 0 lists missing layer file: incorret_layer.csv',
+            'Invalid metadata - Layer: 1 lists missing layer file: missing_layer.csv'
+          )
         )
       end
     end
