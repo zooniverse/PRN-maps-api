@@ -110,13 +110,20 @@ module PrnMaps
   end
 
   class Upload < Api
-    ACCPETED_TYPES = {
-      layer: "text/csv",
-      metadata: 'application/json'
-    }
     use OptionsBasicAuth, "Protected Area" do |username, password|
       username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
       password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+    end
+
+    def self.accepted_types
+      @accepted_types ||= {
+        layer: "text/csv",
+        metadata: 'application/json'
+      }
+    end
+
+    def self.metadata_attribtues
+      @metadata_attributes ||= %i(file_name created_at)
     end
 
     options '/layers/:event_name' do
@@ -147,13 +154,13 @@ module PrnMaps
 
       uploaded_layers = []
       layer_uploads.each do |layer|
-        if layer['type'] == ACCPETED_TYPES[:layer]
+        if layer['type'] == self.class.accepted_types[:layer]
           # TODO: actually put these files using S3 Proxy
           uploaded_layers << layer['filename']
         end
       end
 
-      if metadata_upload['type'] == ACCPETED_TYPES[:metadata]
+      if metadata_upload['type'] == self.class.accepted_types[:metadata]
         # TODO: actually put this files using S3 Proxy
         uploaded_metadata = metadata_upload['filename']
       end
