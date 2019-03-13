@@ -11,7 +11,7 @@ module PrnMaps
     attr_reader :s3
 
     def initialize
-      @s3 ||= Aws::S3::Resource.new
+      @s3 = Aws::S3::Resource.new
     end
 
     # TODO: these lists will be pretty static,

@@ -2,11 +2,24 @@
 
 require_relative 'spec_helper'
 
-include Rack::Test::Methods
-
 describe 'uploading layer files' do
+  include Rack::Test::Methods
+
   def app
     PrnMaps::Upload
+  end
+
+  def files_payload(layers, metadata)
+    layer_files = layers.each do |layer|
+      Rack::Test::UploadedFile.new(layer, 'text/csv')
+    end
+    {
+      layers: layer_files,
+      metadata: Rack::Test::UploadedFile.new(
+        metadata,
+        'application/json'
+      )
+    }
   end
 
   describe 'without credentials' do
@@ -37,7 +50,10 @@ describe 'uploading layer files' do
     it 'should reject missing metadata files' do
       payload = {
         layers: [
-          Rack::Test::UploadedFile.new('spec/test_files/layer_1.csv', 'text/csv')
+          Rack::Test::UploadedFile.new(
+            'spec/test_files/layer_1.csv',
+            'text/csv'
+          )
         ]
       }
       post '/layers/test_layer', payload
@@ -49,7 +65,10 @@ describe 'uploading layer files' do
 
     it 'should reject missing layer files' do
       payload = {
-        metadata: Rack::Test::UploadedFile.new('spec/test_files/layer_1_metadata.json', 'application/json')
+        metadata: Rack::Test::UploadedFile.new(
+          'spec/test_files/layer_1_metadata.json',
+          'application/json'
+        )
       }
       post '/layers/test_layer', payload
       last_response.status.must_equal(400)
@@ -61,9 +80,15 @@ describe 'uploading layer files' do
     it 'should accept one layer file' do
       payload = {
         layers: [
-          Rack::Test::UploadedFile.new('spec/test_files/layer_1.csv', 'text/csv')
+          Rack::Test::UploadedFile.new(
+            'spec/test_files/layer_1.csv',
+            'text/csv'
+          )
         ],
-        metadata: Rack::Test::UploadedFile.new('spec/test_files/layer_1_metadata.json', 'application/json')
+        metadata: Rack::Test::UploadedFile.new(
+          'spec/test_files/layer_1_metadata.json',
+          'application/json'
+        )
       }
       post '/layers/test_layer', payload
       last_response.status.must_equal(201)
@@ -71,28 +96,34 @@ describe 'uploading layer files' do
       last_response.body.must_equal(result.to_json)
     end
 
-    it 'should respond with useful error when metadata upload is an invalid schema' do
-      payload = {
-        layers: [
-          Rack::Test::UploadedFile.new('spec/test_files/layer_1.csv', 'text/csv')
-        ],
-        metadata: Rack::Test::UploadedFile.new(
-          'spec/test_files/invalid_schema_metadata.json', 'application/json'
+    focus
+    describe 'when metadata upload is an invalid' do
+      it 'should respond with useful schema errors' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
+          'spec/test_files/invalid_schema_metadata.json'
         )
-      }
-      post '/layers/test_layer', payload
-      last_response.status.must_equal(422)
-      last_response.body.must_equal(
-        error_formatting('Layer: 0, missing attributes: file_name')
-      )
-    end
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting('Layer: 0, missing attributes: file_name')
+        )
+      end
 
-    it "should correlate the metadata contents to the layers" do
-      skip("Add metadata -> layer files correlation ")
+      it 'should ensure the metadata file describes the layers' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
+          'spec/test_files/invalid_layers_metadata.json'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting('Layer: 0, missing attributes: file_name')
+        )
+      end
     end
 
     it "should upload the files to event's pending s3 path" do
-      skip("Add S3 pending upload!")
       # all files should have the
       skip('Add S3 pending upload!')
     end
