@@ -90,7 +90,7 @@ module PrnMaps
         end
 
         validate_uploaded_counts
-        return false if @errors.length > 0 # fail as fast as we can
+        return false if @errors.length.positive? # fail as fast as we can
 
         validate_uploaded_layers
 
