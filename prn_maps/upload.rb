@@ -88,21 +88,10 @@ module PrnMaps
         metadata_layers.each_with_index do |layer_metadata, layer_num|
           validate_layer_metadata(layer_metadata, layer_num)
 
-          # validate the layer metadata describes an uploaded file
           layer_filename = layer_metadata['file_name']
           next unless layer_filename
 
-          layer_file = layers_upload.detect do |layer_upload|
-            layer_upload['filename'] == layer_filename
-          end
-          # found the layer file so we are all good
-          next if layer_file
-
-          # whoops, report that error
-          @errors << layer_error_msg(
-            layer_num,
-            "lists missing layer file: #{layer_filename}"
-          )
+          validate_layer_files(layer_filename, layer_num)
         end
 
         @errors.empty?
@@ -125,6 +114,7 @@ module PrnMaps
         {}
       end
 
+      # validate the metadata has the required schema
       def validate_layer_metadata(layer_metadata, layer_num)
         missing_metadata = self.class.required_keys - layer_metadata.keys
         return if missing_metadata.empty?
@@ -132,6 +122,19 @@ module PrnMaps
         @errors << layer_error_msg(
           layer_num,
           "missing attributes: #{missing_metadata.join(',')}"
+        )
+      end
+
+      # validate the layer metadata describes an uploaded layer file
+      def validate_layer_files(layer_filename, layer_num)
+        found_layer_file = layers_upload.detect do |layer_upload|
+          layer_upload['filename'] == layer_filename
+        end
+        return if found_layer_file
+
+        @errors << layer_error_msg(
+          layer_num,
+          "lists missing layer file: #{layer_filename}"
         )
       end
 
