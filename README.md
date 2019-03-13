@@ -36,6 +36,23 @@ GET `/pending/layers/${event_name}`
 POST `/pending/layers/${event_name}/approve`
   + Approve and publish all the pending data layers for a known event name.
 
+POST `/upload/layers/${event_name}`
+  + Upload a list of layer files and one metadata files to describe the list of layers. Use `multipart/form-data` encoding to upload the files
+      + At least one layer file is expected via `layers[]` param
+      + Exactly one metadata JSON file is expected on `metadata` param
+  + The metadata JSON file must conform to a valid schema
+      ```
+      {
+      	"layers": [{
+      		"file_name": "layer_1.csv",
+      		"created_at": "2018-07-07T15:55:00.511Z"
+      	},{
+      		"file_name": "layer_2.csv",
+      		"created_at": "2018-07-07T15:55:00.511Z"
+      	}]
+      }
+      ```
+
 # Get started
 
 Using docker and docker-compose
