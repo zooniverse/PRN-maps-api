@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module PrnMaps
   class Config
-    ERROR_REPORTING_ENVS = %w(staging production).freeze
+    ERROR_REPORTING_ENVS = %w[staging production].freeze
 
     def self.enable_error_reports?
       ERROR_REPORTING_ENVS.include?(environment)

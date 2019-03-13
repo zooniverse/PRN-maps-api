@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Bundler.require
 
 require './prn_maps/app.rb'
@@ -13,8 +15,8 @@ Rollbar.configure do |config|
   config.use_async    = use_async
 end
 
-run Rack::URLMap.new({
-  "/" => PrnMaps::Public,
-  "/pending" => PrnMaps::Pending,
-  "/upload" => PrnMaps::Upload
-})
+run Rack::URLMap.new(
+  '/' => PrnMaps::Public,
+  '/pending' => PrnMaps::Pending,
+  '/upload' => PrnMaps::Upload
+)

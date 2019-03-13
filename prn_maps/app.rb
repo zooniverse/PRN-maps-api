@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 require 'sinatra/base'
-require "sinatra/json"
+require 'sinatra/json'
 require 'sinatra/cross_origin'
 require 'rollbar/middleware/sinatra'
 require_relative 's3_proxy'
@@ -7,7 +9,7 @@ require_relative 'options_basic_auth'
 
 module PrnMaps
   class Api < Sinatra::Base
-    VERSION = '0.0.1'.freeze
+    VERSION = '0.0.1'
     CORS_DEFAULTS = '([a-z0-9\-\.]+\.zooniverse\.org|prn-maps\.planetaryresponsenetwork\.org)'
 
     use Rollbar::Middleware::Sinatra
@@ -18,7 +20,7 @@ module PrnMaps
     end
 
     before do
-      cross_origin allow_origin: cors_origins, allowmethods: [:get, :post]
+      cross_origin allow_origin: cors_origins, allowmethods: %i[get post]
 
       content_type 'application/json'
     end
@@ -27,10 +29,10 @@ module PrnMaps
 
     def cors_origins
       # not allowed a regex in CORS_ORIGINS as is
-      if env_cors = ENV["CORS_ORIGINS"]
+      if env_cors = ENV['CORS_ORIGINS']
         env_cors
       else
-        /^https?:\/\/#{CORS_DEFAULTS}(:\d+)?$/
+        %r{^https?://#{CORS_DEFAULTS}(:\d+)?$}
       end
     end
 
@@ -81,7 +83,7 @@ module PrnMaps
     end
 
     get '/*' do
-      json({ health: "ok", version: VERSION, commit_id: commit_id })
+      json(health: 'ok', version: VERSION, commit_id: commit_id)
     end
 
     private
@@ -92,9 +94,9 @@ module PrnMaps
   end
 
   class Pending < Api
-    use OptionsBasicAuth, "Protected Area" do |username, password|
-      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
-      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+    use OptionsBasicAuth, 'Protected Area' do |username, password|
+      username == ENV.fetch('BASIC_AUTH_USERNAME', 'prn') &&
+        password == ENV.fetch('BASIC_AUTH_PASSWORD', 'api')
     end
 
     options '/layers/:event_name' do
@@ -116,20 +118,20 @@ module PrnMaps
   end
 
   class Upload < Api
-    use OptionsBasicAuth, "Protected Area" do |username, password|
-      username == ENV.fetch("BASIC_AUTH_USERNAME", 'prn') &&
-      password == ENV.fetch("BASIC_AUTH_PASSWORD", 'api')
+    use OptionsBasicAuth, 'Protected Area' do |username, password|
+      username == ENV.fetch('BASIC_AUTH_USERNAME', 'prn') &&
+        password == ENV.fetch('BASIC_AUTH_PASSWORD', 'api')
     end
 
     def self.accepted_types
       @accepted_types ||= {
-        layer: "text/csv",
+        layer: 'text/csv',
         metadata: 'application/json'
       }
     end
 
     def self.required_metadata_keys
-      @required_metadata_keys ||= %w(file_name created_at)
+      @required_metadata_keys ||= %w[file_name created_at]
     end
 
     options '/layers/:event_name' do
@@ -139,17 +141,13 @@ module PrnMaps
     # upload the submitted layer files to s3
     post '/layers/:event_name' do
       errors = validate_correct_files
-      if errors.length > 0
-        return [400, json({ errors: errors })]
-      end
+      return [400, json(errors: errors)] unless errors.empty?
 
       # TODO: do some validation checking on the uploaded files
       # does the metadata file correlate correctly to the
       # uploaded layer files
       errors = validate_metadata_file
-      if errors.length > 0
-        return [422, json({ errors: errors })]
-      end
+      return [422, json(errors: errors)] unless errors.empty?
 
       if params[:metadata]['type'] == self.class.accepted_types[:metadata]
         # TODO: actually put this files using S3 Proxy
@@ -175,30 +173,28 @@ module PrnMaps
       [].tap do |errors|
         metadata_upload = params[:metadata]
         unless metadata_upload.is_a?(Sinatra::IndifferentHash)
-          errors << "You must specify a metadata file"
+          errors << 'You must specify a metadata file'
         end
 
         layer_uploads = params.fetch(:layers, [])
         if layer_uploads.empty?
-          errors << "You must specify at least one layer file"
+          errors << 'You must specify at least one layer file'
         end
       end
     end
 
     def validate_metadata_file
       [].tap do |errors|
-        begin
-          metadata_json = JSON.parse(params[:metadata][:tempfile].read)
+        metadata_json = JSON.parse(params[:metadata][:tempfile].read)
 
-          metadata_json['layers'].each_with_index do |layer_upload, layer_num|
-            missing_metadata = self.class.required_metadata_keys - layer_upload.keys
-            if missing_metadata.length > 0
-              errors << "Layer: #{layer_num}, missing attributes: #{missing_metadata.join(",")}"
-            end
+        metadata_json['layers'].each_with_index do |layer_upload, layer_num|
+          missing_metadata = self.class.required_metadata_keys - layer_upload.keys
+          unless missing_metadata.empty?
+            errors << "Layer: #{layer_num}, missing attributes: #{missing_metadata.join(',')}"
           end
-        rescue JSON::ParserError => e
-          errors << e.message
         end
+      rescue JSON::ParserError => e
+        errors << e.message
       end
     end
   end

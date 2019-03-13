@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PrnMaps
   class OptionsBasicAuth < Rack::Auth::Basic
     def call(env)

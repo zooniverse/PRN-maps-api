@@ -1,10 +1,11 @@
 # frozen_string_literal: true
+
 module PrnMaps
   class S3Proxy
     BUCKET = 'planetary-response-network'
     MANIFEST_PREFIX = 'manifests'
-    MANIFEST_NAME_REGEX = /.+\/(.+).json/
-    LAYER_NAME_REGEX = /.+\/(.+)\.(.+)/
+    MANIFEST_NAME_REGEX = %r{.+/(.+).json}.freeze
+    LAYER_NAME_REGEX = %r{.+/(.+)\.(.+)}.freeze
     S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
@@ -34,7 +35,7 @@ module PrnMaps
         obj = bucket.object(manifest_path)
         result = JSON.parse(obj.get.body.read)
       rescue Aws::S3::Errors::NoSuchKey
-        result = { error: "Failed to find the event name manifest"}
+        result = { error: 'Failed to find the event name manifest' }
       end
       result
     end
