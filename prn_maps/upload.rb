@@ -34,7 +34,6 @@ module PrnMaps
         return [422, json(errors: validator.errors)]
       end
 
-
       if params[:metadata]['type'] == self.class.accepted_types[:metadata]
         # TODO: actually put this files using S3 Proxy
         uploaded_metadata = params[:metadata]['filename']
