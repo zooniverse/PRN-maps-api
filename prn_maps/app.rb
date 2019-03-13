@@ -87,7 +87,7 @@ module PrnMaps
     private
 
     def commit_id
-      @commit_id ||= File.read('public/commit_id.txt')
+      @commit_id ||= File.read('public/commit_id.txt').strip
     end
   end
 
