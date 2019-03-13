@@ -81,7 +81,13 @@ module PrnMaps
     end
 
     get '/*' do
-      json({ health: "ok", version: VERSION })
+      json({ health: "ok", version: VERSION, commit_id: commit_id })
+    end
+
+    private
+
+    def commit_id
+      @commit_id ||= File.read('public/commit_id.txt')
     end
   end
 

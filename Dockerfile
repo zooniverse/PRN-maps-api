@@ -16,5 +16,7 @@ RUN bundle install --without development test
 ADD ./ /app
 ADD ./docker/supervisord.conf /etc/supervisor/conf.d/prn-maps-api.conf
 
+RUN (git log --format="%H" -n 1 > public/commit_id.txt)
+
 EXPOSE 3000
 ENTRYPOINT /app/docker/start.sh
