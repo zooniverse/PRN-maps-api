@@ -70,8 +70,19 @@ describe "uploading layer files" do
       last_response.body.must_equal(result.to_json)
     end
 
-    it "should check the metadata contents for required schema" do
-      skip("Add metadata schema checks")
+    focus
+    it "should respond with useful error when metadata upload is an invalid schema" do
+      payload = {
+        layers: [
+          Rack::Test::UploadedFile.new("spec/test_files/layer_1.csv", "text/csv"),
+        ],
+        metadata: Rack::Test::UploadedFile.new("spec/test_files/invalid_layer_1_metadata.json", "application/json")
+      }
+      post '/layers/test_layer', payload
+      last_response.status.must_equal(422)
+      last_response.body.must_equal(
+        error_formatting("Layer: 0, missing attributes: file_name")
+      )
     end
 
     it "should correlate the metadata contents to the layers" do

@@ -122,8 +122,8 @@ module PrnMaps
       }
     end
 
-    def self.metadata_attribtues
-      @metadata_attributes ||= %i(file_name created_at)
+    def self.required_metadata_keys
+      @required_metadata_keys ||= %w(file_name created_at)
     end
 
     options '/layers/:event_name' do
@@ -132,16 +132,7 @@ module PrnMaps
 
     # upload the submitted layer files to s3
     post '/layers/:event_name' do
-
-# ensure each file is of an accepted type
-# ensure that we have at least 1 csv and 1 json metadata file
-      errors = []
-      unless metadata_upload = params[:metadata]
-        errors << "You must specify a metadata file"
-      end
-      unless layer_uploads = params[:layers]
-        errors << "You must specify at least one layer file"
-      end
+      errors = validate_correct_files
       if errors.length > 0
         return [400, json({ errors: errors })]
       end
@@ -149,24 +140,60 @@ module PrnMaps
       # TODO: do some validation checking on the uploaded files
       # does the metadata file correlate correctly to the
       # uploaded layer files
-      #
-      # does the metadata file have to conform to a set schema?
+      errors = validate_metadata_file
+      if errors.length > 0
+        return [422, json({ errors: errors })]
+      end
 
+      if params[:metadata]['type'] == self.class.accepted_types[:metadata]
+        # TODO: actually put this files using S3 Proxy
+        uploaded_metadata = params[:metadata]['filename']
+      end
+
+      # does the metadata file have to conform to a set schema?
       uploaded_layers = []
-      layer_uploads.each do |layer|
+      params[:layers].each do |layer|
         if layer['type'] == self.class.accepted_types[:layer]
           # TODO: actually put these files using S3 Proxy
           uploaded_layers << layer['filename']
         end
       end
 
-      if metadata_upload['type'] == self.class.accepted_types[:metadata]
-        # TODO: actually put this files using S3 Proxy
-        uploaded_metadata = metadata_upload['filename']
-      end
-
       result = { layers: uploaded_layers, metadata: uploaded_metadata }
       [201, json(result)]
+    end
+
+    private
+
+    def validate_correct_files
+      [].tap do |errors|
+        metadata_upload = params[:metadata]
+        unless metadata_upload.is_a?(Sinatra::IndifferentHash)
+          errors << "You must specify a metadata file"
+        end
+
+        layer_uploads = params.fetch(:layers, [])
+        if layer_uploads.empty?
+          errors << "You must specify at least one layer file"
+        end
+      end
+    end
+
+    def validate_metadata_file
+      [].tap do |errors|
+        begin
+          metadata_json = JSON.parse(params[:metadata][:tempfile].read)
+
+          metadata_json['layers'].each_with_index do |layer_upload, layer_num|
+            missing_metadata = self.class.required_metadata_keys - layer_upload.keys
+            if missing_metadata.length > 0
+              errors << "Layer: #{layer_num}, missing attributes: #{missing_metadata.join(",")}"
+            end
+          end
+        rescue JSON::ParserError => e
+          errors << e.message
+        end
+      end
     end
   end
 end
