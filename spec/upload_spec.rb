@@ -122,7 +122,6 @@ describe 'uploading layer files' do
         )
         post '/layers/test_layer', payload
         last_response.status.must_equal(422)
-
         last_response.body.must_equal(
           error_formatting(
             'Invalid metadata - ' \
@@ -131,19 +130,30 @@ describe 'uploading layer files' do
         )
       end
 
-      it 'should ensure the metadata file describes only the layers' do
+      it 'should ensure the metadata file describes only known layers' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],
+          'spec/test_files/unknown_layers_metadata.json'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting(
+            'Invalid metadata - number of entries does not match the number of uploaded files'
+          )
+        )
+      end
+
+      it 'should ensure the metadata file uniquely describes the layers' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv', 'spec/test_files/layer_1.csv'],
           'spec/test_files/invalid_layers_metadata.json'
         )
         post '/layers/test_layer', payload
         last_response.status.must_equal(422)
 
         last_response.body.must_equal(
-          error_formatting(
-            'Invalid metadata - Layer: 0 lists missing layer file: incorret_layer.csv',
-            'Invalid metadata - Layer: 1 lists missing layer file: missing_layer.csv'
-          )
+          error_formatting('Invalid metadata - file contains non unique entries')
         )
       end
     end

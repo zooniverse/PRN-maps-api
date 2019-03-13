@@ -83,16 +83,17 @@ module PrnMaps
       end
 
       def valid?
-        # validate_layer_counts(layer_metadata, layer_num)
-
-        metadata_layers.each_with_index do |layer_metadata, layer_num|
-          validate_layer_metadata(layer_metadata, layer_num)
-
-          layer_filename = layer_metadata['file_name']
-          next unless layer_filename
-
-          validate_layer_files(layer_filename, layer_num)
+        begin
+          metadata_layers
+        rescue JSON::ParserError
+          @errors << 'please lint your JSON file'
+          return false
         end
+
+        validate_uploaded_counts
+        return false if @errors.length > 0 # fail as fast as we can
+
+        validate_uploaded_layers
 
         @errors.empty?
       end
@@ -104,14 +105,34 @@ module PrnMaps
       private
 
       def metadata_layers
-        @metadata_layers ||= metadata_json.fetch('layers', [])
+        @metadata_layers ||= metadata_json['layers']
       end
 
       def metadata_json
         JSON.parse(metadata_upload[:tempfile].read)
-      rescue JSON::ParserError
-        @errors << 'please lint your JSON file'
-        {}
+      end
+
+      def validate_uploaded_counts
+        if metadata_layers.length != layers_upload.length
+          @errors << 'number of entries does not match the number of uploaded files'
+          return # fail fast
+        end
+
+        uniq_files_match = uniq_metadata_file_names.length == metadata_layers.length
+        return if uniq_files_match
+
+        @errors << 'file contains non unique entries'
+      end
+
+      def validate_uploaded_layers
+        metadata_layers.each_with_index do |layer_metadata, layer_num|
+          validate_layer_metadata(layer_metadata, layer_num)
+
+          layer_filename = layer_metadata['file_name']
+          next unless layer_filename
+
+          validate_layer_files(layer_filename, layer_num)
+        end
       end
 
       # validate the metadata has the required schema
@@ -140,6 +161,10 @@ module PrnMaps
 
       def layer_error_msg(layer_num, msg)
         "Layer: #{layer_num} #{msg}"
+      end
+
+      def uniq_metadata_file_names
+        metadata_layers.map { |metadata| metadata['file_name'] }.uniq
       end
     end
   end
