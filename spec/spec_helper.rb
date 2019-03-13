@@ -1,5 +1,6 @@
 ENV['RACK_ENV'] = 'test'
 require 'minitest/autorun'
+require "minitest/focus"
 require 'rack/test'
 require 'pry'
 

@@ -15,5 +15,7 @@ end
 
 group :test do
  gem 'minitest'
+ gem 'minitest-autotest'
+ gem 'minitest-focus'
  gem 'rack-test'
 end

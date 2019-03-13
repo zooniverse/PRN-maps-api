@@ -1,4 +1,3 @@
-require 'minitest/autorun'
 require_relative 'spec_helper'
 
 include Rack::Test::Methods
