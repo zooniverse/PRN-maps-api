@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'aws-sdk-s3'
 
 module PrnMaps
   class S3Proxy
@@ -11,7 +12,7 @@ module PrnMaps
     attr_reader :s3
 
     def initialize
-      @s3 = Aws::S3::Resource.new
+      @s3 = ::Aws::S3::Resource.new
     end
 
     # TODO: these lists will be pretty static,
@@ -72,7 +73,6 @@ module PrnMaps
 
     def upload_pending_event_file(event_name, file_name, temp_file)
       pending_bucket_path_prefix = "events/#{event_name}/layers/pending"
-      binding.pry
       s3_file_path = "#{pending_bucket_path_prefix}/#{file_name}"
       obj = bucket.object(s3_file_path)
       # obj.upload_file(temp_file)

@@ -22,6 +22,19 @@ describe 'uploading layer files' do
     }
   end
 
+  # http://docs.seattlerb.org/minitest/Minitest/Mock.html
+  # can't stub the behaviour due to the number
+  # of times the method is called, 1 for each layer
+  def mock_s3_proxy(layers, upload_args=[String, String, Tempfile])
+    s3_proxy = Minitest::Mock.new
+    PrnMaps::S3Proxy.stub(:new, s3_proxy) do
+      layers.map do |l|
+        s3_proxy.expect(:upload_pending_event_file, File.basename(l), upload_args)
+      end
+      yield(s3_proxy)
+    end
+  end
+
   describe 'without credentials' do
     it 'should request authentication' do
       post '/layers/test_layer', {}
@@ -45,22 +58,28 @@ describe 'uploading layer files' do
     end
 
     it 'should accept one layer file' do
+      layers = ['spec/test_files/layer_1.csv']
       payload = files_payload(
-        ['spec/test_files/layer_1.csv'],
+        layers,
         'spec/test_files/layer_1_metadata.json'
       )
-      post '/layers/test_layer', payload
+      mock_s3_proxy(layers) do
+        post '/layers/test_layer', payload
+      end
       last_response.status.must_equal(201)
       result = { layers: ['layer_1.csv'], metadata: 'layer_1_metadata.json' }
       last_response.body.must_equal(result.to_json)
     end
 
     it 'should accept one multiple layer files' do
+      layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
       payload = files_payload(
-        ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv'],
+        layers,
         'spec/test_files/layer_1_and_2_metadata.json'
       )
-      post '/layers/test_layer', payload
+      mock_s3_proxy(layers) do
+        post '/layers/test_layer', payload
+      end
       last_response.status.must_equal(201)
       result = {
         layers: ['layer_1.csv', 'layer_2.csv'],
@@ -183,18 +202,14 @@ describe 'uploading layer files' do
       end
     end
 
-    focus
     it "should upload the files to event's pending s3 path" do
+      upload_layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
       payload = files_payload(
-        ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv'],
+        upload_layers,
         'spec/test_files/layer_1_and_2_metadata.json'
       )
-      s3_proxy = Minitest::Mock.new
-      PrnMaps::S3Proxy.stub(:new, s3_proxy) do
-        # http://docs.seattlerb.org/minitest/Minitest/Mock.html
-        # TODO: shoudl we expect tmp file IO args here?
-        s3_proxy.expect(:upload_pending_event_file, 'layer_1.csv', ['test_layer', 'layer_1.csv', Tempfile])
-        s3_proxy.expect(:upload_pending_event_file, 'layer_2.csv', ['test_layer', 'layer_2.csv', Tempfile])
+      upload_args = ['test_layer', String, Tempfile]
+      mock_s3_proxy(upload_layers, upload_args) do |s3_proxy|
         post '/layers/test_layer', payload
         s3_proxy.verify.must_equal(true)
       end
