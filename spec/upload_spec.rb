@@ -29,7 +29,15 @@ describe 'uploading layer files' do
     end
   end
 
-  describe 'with credentials' do
+  describe 'with invalid credentials' do
+    it 'should request authentication' do
+      authorize 'prn', 'invalid'
+      post '/layers/test_layer', {}
+      last_response.status.must_equal(401)
+    end
+  end
+
+  describe 'with valid credentials' do
     before { authorize 'prn', 'api' }
 
     def error_formatting(*errors)
@@ -175,9 +183,21 @@ describe 'uploading layer files' do
       end
     end
 
+    focus
     it "should upload the files to event's pending s3 path" do
-      # all files should have the
-      skip('Add S3 pending upload!')
+      payload = files_payload(
+        ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv'],
+        'spec/test_files/layer_1_and_2_metadata.json'
+      )
+      s3_proxy = Minitest::Mock.new
+      PrnMaps::S3Proxy.stub(:new, s3_proxy) do
+        # http://docs.seattlerb.org/minitest/Minitest/Mock.html
+        # TODO: shoudl we expect tmp file IO args here?
+        s3_proxy.expect(:upload_pending_event_file, 'layer_1.csv', ['test_layer', 'layer_1.csv', Tempfile])
+        s3_proxy.expect(:upload_pending_event_file, 'layer_2.csv', ['test_layer', 'layer_2.csv', Tempfile])
+        post '/layers/test_layer', payload
+        s3_proxy.verify.must_equal(true)
+      end
     end
   end
 end

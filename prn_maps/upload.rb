@@ -42,9 +42,17 @@ module PrnMaps
       # does the metadata file have to conform to a set schema?
       uploaded_layers = []
       params[:layers].each do |layer|
+  # TODO: this shoudl raise and error or
+  # we pre check all layers / metadata files make sense...
+  # before we get here...
         if layer['type'] == self.class.accepted_types[:layer]
           # TODO: actually put these files using S3 Proxy
-          uploaded_layers << layer['filename']
+          uploaded_file = s3_proxy.upload_pending_event_file(
+            params[:event_name],
+            layer['filename'],
+            layer['tempfile']
+          )
+          uploaded_layers << uploaded_file
         end
       end
 

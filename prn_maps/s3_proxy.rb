@@ -70,6 +70,17 @@ module PrnMaps
       end
     end
 
+    def upload_pending_event_file(event_name, file_name, temp_file)
+      pending_bucket_path_prefix = "events/#{event_name}/layers/pending"
+      binding.pry
+      s3_file_path = "#{pending_bucket_path_prefix}/#{file_name}"
+      obj = bucket.object(s3_file_path)
+      # obj.upload_file(temp_file)
+
+      # return the filename that we've uploaded
+      file_name
+    end
+
     private
 
     def bucket
