@@ -88,8 +88,61 @@ describe 'uploading layer files' do
       last_response.body.must_equal(result.to_json)
     end
 
-    describe 'missing file paylaods' do
+    it "should upload the files to event's pending s3 path" do
+      upload_layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
+      payload = files_payload(
+        upload_layers,
+        'spec/test_files/layer_1_and_2_metadata.json'
+      )
+      upload_args = ['test_layer', String, Tempfile]
+      mock_s3_proxy(upload_layers, upload_args) do |s3_proxy|
+        post '/layers/test_layer', payload
+        s3_proxy.verify.must_equal(true)
+      end
+    end
 
+    describe "with invalid file types" do
+
+      it "should reject non csv layers files" do
+        layer_files = ['spec/test_files/invalid_layer_type.txt'].map do |layer|
+          Rack::Test::UploadedFile.new(layer, 'text/plain')
+        end
+
+        post '/layers/test_layer', {
+          layers: layer_files,
+          metadata: Rack::Test::UploadedFile.new(
+            'spec/test_files/invalid_layer_type_metadata.json',
+            'application/json'
+          )
+        }
+
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting('Invalid metadata - file type must be text/csv')
+        )
+      end
+
+      it "should reject non json metadata files" do
+        layer_files = ['spec/test_files/layer_1.csv'].map do |layer|
+          Rack::Test::UploadedFile.new(layer, 'text/csv')
+        end
+
+        post '/layers/test_layer', {
+          layers: layer_files,
+          metadata: Rack::Test::UploadedFile.new(
+            'spec/test_files/invalid_layer_1_metadata.csv',
+            'text/csv'
+          )
+        }
+
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting('Invalid metadata - file type must be application/json')
+        )
+      end
+    end
+
+    describe 'missing file paylaods' do
       it 'should reject empty payloads' do
         post '/layers/test_layer', {}
         last_response.status.must_equal(400)
@@ -199,19 +252,6 @@ describe 'uploading layer files' do
         last_response.body.must_equal(
           error_formatting('Invalid metadata - file contains non unique entries')
         )
-      end
-    end
-
-    it "should upload the files to event's pending s3 path" do
-      upload_layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
-      payload = files_payload(
-        upload_layers,
-        'spec/test_files/layer_1_and_2_metadata.json'
-      )
-      upload_args = ['test_layer', String, Tempfile]
-      mock_s3_proxy(upload_layers, upload_args) do |s3_proxy|
-        post '/layers/test_layer', payload
-        s3_proxy.verify.must_equal(true)
       end
     end
   end

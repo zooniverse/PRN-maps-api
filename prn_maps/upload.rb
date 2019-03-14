@@ -10,13 +10,6 @@ module PrnMaps
         password == ENV.fetch('BASIC_AUTH_PASSWORD', 'api')
     end
 
-    def self.accepted_types
-      @accepted_types ||= {
-        layer: 'text/csv',
-        metadata: 'application/json'
-      }
-    end
-
     options '/layers/:event_name' do
       options_req
     end
@@ -26,34 +19,23 @@ module PrnMaps
       errors = validate_correct_files
       return [400, json(errors: errors)] unless errors.empty?
 
-      # TODO: do some validation checking on the uploaded files
-      # does the metadata file correlate correctly to the
-      # uploaded layer files
-      validator = MetadataValidator.new(params[:metadata], params[:layers])
+      validator = UploadValidator.new(params[:metadata], params[:layers])
       unless validator.valid?
         return [422, json(errors: validator.errors)]
       end
-
-      if params[:metadata]['type'] == self.class.accepted_types[:metadata]
-        # TODO: actually put this files using S3 Proxy
-        uploaded_metadata = params[:metadata]['filename']
-      end
+      # TODO: actually put this files using S3 Proxy
+      uploaded_metadata = params[:metadata]['filename']
 
       # does the metadata file have to conform to a set schema?
       uploaded_layers = []
       params[:layers].each do |layer|
-  # TODO: this shoudl raise and error or
-  # we pre check all layers / metadata files make sense...
-  # before we get here...
-        if layer['type'] == self.class.accepted_types[:layer]
-          # TODO: actually put these files using S3 Proxy
-          uploaded_file = s3_proxy.upload_pending_event_file(
-            params[:event_name],
-            layer['filename'],
-            layer['tempfile']
-          )
-          uploaded_layers << uploaded_file
-        end
+        # TODO: actually put these files using S3 Proxy
+        uploaded_file = s3_proxy.upload_pending_event_file(
+          params[:event_name],
+          layer['filename'],
+          layer['tempfile']
+        )
+        uploaded_layers << uploaded_file
       end
 
       result = { layers: uploaded_layers, metadata: uploaded_metadata }
@@ -76,11 +58,19 @@ module PrnMaps
       end
     end
 
-    class MetadataValidator
+    class UploadValidator
       attr_reader :metadata_upload, :layers_upload
 
       def self.required_keys
         @required_keys ||= %w[file_name created_at]
+      end
+
+      def self.metadata_file_type
+        @metadata_file_type ||= 'application/json'
+      end
+
+      def self.layer_file_type
+        @layer_file_type ||= 'text/csv'
       end
 
       def initialize(metadata_upload, layers_upload)
@@ -90,6 +80,9 @@ module PrnMaps
       end
 
       def valid?
+        validate_upload_file_types
+        return false if @errors.length.positive? # fail as fast as we can
+
         begin
           metadata_layers
         rescue JSON::ParserError
@@ -117,6 +110,28 @@ module PrnMaps
 
       def metadata_json
         JSON.parse(metadata_upload[:tempfile].read)
+      end
+
+      def validate_upload_file_types
+        valid_metadata_file? && valid_layer_files?
+      end
+
+      def valid_metadata_file?
+        valid_file = metadata_upload['type'] == self.class.metadata_file_type
+        unless valid_file
+          @errors << "file type must be #{self.class.metadata_file_type}"
+        end
+        valid_file
+      end
+
+      def valid_layer_files?
+        layers_upload.all? do |layer_upload|
+          valid_file = layer_upload['type'] == self.class.layer_file_type
+          unless valid_file
+            @errors << "file type must be #{self.class.layer_file_type}"
+          end
+          valid_file
+        end
       end
 
       def validate_uploaded_counts
