@@ -36,47 +36,6 @@ describe 'uploading layer files' do
       { errors: errors }.to_json
     end
 
-    it 'should reject empty payloads' do
-      post '/layers/test_layer', {}
-      last_response.status.must_equal(400)
-      last_response.body.must_equal(
-        error_formatting(
-          'You must specify a metadata file',
-          'You must specify at least one layer file'
-        )
-      )
-    end
-
-    it 'should reject missing metadata files' do
-      payload = {
-        layers: [
-          Rack::Test::UploadedFile.new(
-            'spec/test_files/layer_1.csv',
-            'text/csv'
-          )
-        ]
-      }
-      post '/layers/test_layer', payload
-      last_response.status.must_equal(400)
-      last_response.body.must_equal(
-        error_formatting('You must specify a metadata file')
-      )
-    end
-
-    it 'should reject missing layer files' do
-      payload = {
-        metadata: Rack::Test::UploadedFile.new(
-          'spec/test_files/layer_1_metadata.json',
-          'application/json'
-        )
-      }
-      post '/layers/test_layer', payload
-      last_response.status.must_equal(400)
-      last_response.body.must_equal(
-        error_formatting('You must specify at least one layer file')
-      )
-    end
-
     it 'should accept one layer file' do
       payload = files_payload(
         ['spec/test_files/layer_1.csv'],
@@ -86,6 +45,64 @@ describe 'uploading layer files' do
       last_response.status.must_equal(201)
       result = { layers: ['layer_1.csv'], metadata: 'layer_1_metadata.json' }
       last_response.body.must_equal(result.to_json)
+    end
+
+    it 'should accept one multiple layer files' do
+      payload = files_payload(
+        ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv'],
+        'spec/test_files/layer_1_and_2_metadata.json'
+      )
+      post '/layers/test_layer', payload
+      last_response.status.must_equal(201)
+      result = {
+        layers: ['layer_1.csv', 'layer_2.csv'],
+        metadata: 'layer_1_and_2_metadata.json'
+      }
+      last_response.body.must_equal(result.to_json)
+    end
+
+    describe 'missing file paylaods' do
+
+      it 'should reject empty payloads' do
+        post '/layers/test_layer', {}
+        last_response.status.must_equal(400)
+        last_response.body.must_equal(
+          error_formatting(
+            'You must specify a metadata file',
+            'You must specify at least one layer file'
+          )
+        )
+      end
+
+      it 'should reject missing metadata files' do
+        payload = {
+          layers: [
+            Rack::Test::UploadedFile.new(
+              'spec/test_files/layer_1.csv',
+              'text/csv'
+            )
+          ]
+        }
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(400)
+        last_response.body.must_equal(
+          error_formatting('You must specify a metadata file')
+        )
+      end
+
+      it 'should reject missing layer files' do
+        payload = {
+          metadata: Rack::Test::UploadedFile.new(
+            'spec/test_files/layer_1_metadata.json',
+            'application/json'
+          )
+        }
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(400)
+        last_response.body.must_equal(
+          error_formatting('You must specify at least one layer file')
+        )
+      end
     end
 
     describe 'when metadata upload is an invalid' do
