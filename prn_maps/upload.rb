@@ -23,13 +23,16 @@ module PrnMaps
       unless validator.valid?
         return [422, json(errors: validator.errors)]
       end
-      # TODO: actually put this files using S3 Proxy
-      uploaded_metadata = params[:metadata]['filename']
+
+      uploaded_metadata = s3_proxy.upload_pending_event_file(
+        params[:event_name],
+        params[:metadata]['filename'],
+        params[:metadata]['tempfile']
+      )
 
       # does the metadata file have to conform to a set schema?
       uploaded_layers = []
       params[:layers].each do |layer|
-        # TODO: actually put these files using S3 Proxy
         uploaded_file = s3_proxy.upload_pending_event_file(
           params[:event_name],
           layer['filename'],

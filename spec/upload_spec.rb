@@ -25,8 +25,9 @@ describe 'uploading layer files' do
   # http://docs.seattlerb.org/minitest/Minitest/Mock.html
   # can't stub the behaviour due to the number
   # of times the method is called, 1 for each layer
-  def mock_s3_proxy(layers, upload_args=[String, String, Tempfile])
+  def mock_s3_proxy(metadata, layers, upload_args=[String, String, Tempfile])
     s3_proxy = Minitest::Mock.new
+    s3_proxy.expect(:upload_pending_event_file, File.basename(metadata), upload_args)
     PrnMaps::S3Proxy.stub(:new, s3_proxy) do
       layers.map do |l|
         s3_proxy.expect(:upload_pending_event_file, File.basename(l), upload_args)
@@ -59,11 +60,9 @@ describe 'uploading layer files' do
 
     it 'should accept one layer file' do
       layers = ['spec/test_files/layer_1.csv']
-      payload = files_payload(
-        layers,
-        'spec/test_files/layer_1_metadata.json'
-      )
-      mock_s3_proxy(layers) do
+      metadata = 'spec/test_files/layer_1_metadata.json'
+      payload = files_payload(layers, metadata)
+      mock_s3_proxy(metadata, layers) do
         post '/layers/test_layer', payload
       end
       last_response.status.must_equal(201)
@@ -73,11 +72,9 @@ describe 'uploading layer files' do
 
     it 'should accept one multiple layer files' do
       layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
-      payload = files_payload(
-        layers,
-        'spec/test_files/layer_1_and_2_metadata.json'
-      )
-      mock_s3_proxy(layers) do
+      metadata = 'spec/test_files/layer_1_and_2_metadata.json'
+      payload = files_payload(layers, metadata)
+      mock_s3_proxy(metadata, layers) do
         post '/layers/test_layer', payload
       end
       last_response.status.must_equal(201)
@@ -90,12 +87,10 @@ describe 'uploading layer files' do
 
     it "should upload the files to event's pending s3 path" do
       upload_layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
-      payload = files_payload(
-        upload_layers,
-        'spec/test_files/layer_1_and_2_metadata.json'
-      )
+      metadata = 'spec/test_files/layer_1_and_2_metadata.json'
+      payload = files_payload(upload_layers, metadata)
       upload_args = ['test_layer', String, Tempfile]
-      mock_s3_proxy(upload_layers, upload_args) do |s3_proxy|
+      mock_s3_proxy(metadata, upload_layers, upload_args) do |s3_proxy|
         post '/layers/test_layer', payload
         s3_proxy.verify.must_equal(true)
       end
