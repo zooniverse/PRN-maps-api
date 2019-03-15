@@ -28,6 +28,9 @@ module PrnMaps
       # get the known upload version state for this event
       upload_version_num = s3_proxy.next_version(event_name)
 
+      # seems like this is a bottle neck running each one
+      # will have to look at optimizing these s3 calls
+      # maybe? https://github.com/grosser/parallel
       uploaded_metadata = s3_proxy.upload_pending_event_file(
         event_name,
         upload_version_num,
