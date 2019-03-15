@@ -7,6 +7,7 @@ module PrnMaps
     MANIFEST_PREFIX = 'manifests'
     MANIFEST_NAME_REGEX = %r{.+/(.+).json}.freeze
     LAYER_NAME_REGEX = %r{.+/(.+)\.(.+)}.freeze
+    LAYER_VERSION_REGEX = %r{.+\/(v\d+)\/.+\..+}.freeze
     S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
@@ -107,6 +108,10 @@ module PrnMaps
       LAYER_NAME_REGEX.match(path)[1]
     end
 
+    def layer_version(path)
+      LAYER_VERSION_REGEX.match(path)[1]
+    end
+
     def layer_name_with_extension(path)
       layer_name_match = LAYER_NAME_REGEX.match(path)
       "#{layer_name_match[1]}.#{layer_name_match[2]}"
@@ -118,17 +123,24 @@ module PrnMaps
 
     # TODO: add fragment caching here to avoid hitting s3 all the time
     def get_event_layers(event_name, path_suffix)
-      [].tap do |layers|
-        layer_objects = bucket.objects(
-          prefix: "events/#{event_name}/layers/#{path_suffix}/",
-          delimiter: '/'
-        )
-        layer_objects.each do |obj|
-          layers << {
-            version: 1,
-            name: layer_name(obj.key),
-            url: bucket_url_generator(obj.key)
-          }
+      version_data = {}
+      layer_prefix = "events/#{event_name}/layers/#{path_suffix}/v"
+      layer_objects = bucket.objects(prefix: layer_prefix, delimiter: '')
+      layer_objects.each do |obj|
+        version_num = layer_version(obj.key)
+        version_layers = version_data[version_num] ||= []
+        version_layers << {
+          name: layer_name(obj.key),
+          url: bucket_url_generator(obj.key)
+        }
+      end
+      # client request to have the lastest version data first
+      sorted_version_keys = version_data.keys.sort do |x,y|
+        y[1..-1].to_i <=> x[1..-1].to_i
+      end
+      [].tap do |result_layers|
+        sorted_version_keys.each do |ver_key|
+          result_layers << { version: ver_key, layers: version_data[ver_key] }
         end
       end
     end
