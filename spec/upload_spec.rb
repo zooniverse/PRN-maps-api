@@ -25,9 +25,11 @@ describe 'uploading layer files' do
   # http://docs.seattlerb.org/minitest/Minitest/Mock.html
   # can't stub the behaviour due to the number
   # of times the method is called, 1 for each layer
-  def mock_s3_proxy(metadata, layers, upload_args=[String, String, Tempfile])
+  def mock_s3_proxy(metadata, layers, upload_args=[String, Integer, String, Tempfile])
     s3_proxy = Minitest::Mock.new
     s3_proxy.expect(:upload_pending_event_file, File.basename(metadata), upload_args)
+    s3_proxy.expect(:next_version, 1, [String])
+    s3_proxy.expect(:update_pending_upload_version, 1, [String, Integer])
     PrnMaps::S3Proxy.stub(:new, s3_proxy) do
       layers.map do |l|
         s3_proxy.expect(:upload_pending_event_file, File.basename(l), upload_args)
@@ -89,7 +91,7 @@ describe 'uploading layer files' do
       upload_layers = ['spec/test_files/layer_1.csv', 'spec/test_files/layer_2.csv']
       metadata = 'spec/test_files/layer_1_and_2_metadata.json'
       payload = files_payload(upload_layers, metadata)
-      upload_args = ['test_layer', String, Tempfile]
+      upload_args = ['test_layer', Integer, String, Tempfile]
       mock_s3_proxy(metadata, upload_layers, upload_args) do |s3_proxy|
         post '/layers/test_layer', payload
         s3_proxy.verify.must_equal(true)

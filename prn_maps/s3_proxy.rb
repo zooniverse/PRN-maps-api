@@ -71,14 +71,26 @@ module PrnMaps
       end
     end
 
-    def upload_pending_event_file(event_name, file_name, temp_file)
-      pending_bucket_path_prefix = "events/#{event_name}/layers/pending"
-      s3_file_path = "#{pending_bucket_path_prefix}/#{file_name}"
+    def upload_pending_event_file(event_name, version_num, file_name, temp_file)
+      bucket_path_prefix = pending_bucket_path_prefix(event_name)
+
+      # write the upload layer file to s3 event's pending area
+      # with a version prefix to track different batch uploads
+      # e.g. /pending/v1/*, pending/v2/*
+      s3_file_path = "#{bucket_path_prefix}/v#{version_num}/#{file_name}"
       obj = bucket.object(s3_file_path)
       obj.upload_file(temp_file)
 
       # return the filename that we've uploaded
       file_name
+    end
+
+    def next_version(event_name)
+      upload_version(event_name).next_version
+    end
+
+    def update_pending_upload_version(event_name, version_num)
+      upload_version(event_name).update_known_version(version_num)
     end
 
     private
@@ -113,10 +125,55 @@ module PrnMaps
         )
         layer_objects.each do |obj|
           layers << {
+            version: 1,
             name: layer_name(obj.key),
             url: bucket_url_generator(obj.key)
           }
         end
+      end
+    end
+
+    def pending_bucket_path_prefix(event_name)
+      "events/#{event_name}/layers/pending"
+    end
+
+    def upload_version(event_name)
+      @upload_version ||= UploadVersion.new(
+        bucket,
+        pending_bucket_path_prefix(event_name)
+      )
+    end
+
+    class UploadVersion
+      attr_reader :bucket, :pending_path
+
+      def initialize(bucket, pending_path)
+        @bucket = bucket
+        @pending_path = pending_path
+      end
+
+      def next_version
+        begin
+          last_known_version = version_file.get.body.read.chomp
+        rescue Aws::S3::Errors::NoSuchKey
+          last_known_version = 0
+        end
+        last_known_version.to_i + 1
+      end
+
+      def update_known_version(curr_version)
+        version_file.put(body: curr_version.to_s)
+        curr_version
+      end
+
+      private
+
+      def version_file_path
+        @version_file_path ||= "#{pending_path}/last_known_version.txt"
+      end
+
+      def version_file
+        bucket.object(version_file_path)
       end
     end
   end

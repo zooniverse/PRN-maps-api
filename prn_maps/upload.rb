@@ -16,6 +16,7 @@ module PrnMaps
 
     # upload the submitted layer files to s3
     post '/layers/:event_name' do
+      event_name = params[:event_name]
       errors = validate_correct_files
       return [400, json(errors: errors)] unless errors.empty?
 
@@ -24,8 +25,12 @@ module PrnMaps
         return [422, json(errors: validator.errors)]
       end
 
+      # get the known upload version state for this event
+      upload_version_num = s3_proxy.next_version(event_name)
+
       uploaded_metadata = s3_proxy.upload_pending_event_file(
-        params[:event_name],
+        event_name,
+        upload_version_num,
         params[:metadata]['filename'],
         params[:metadata]['tempfile']
       )
@@ -34,12 +39,17 @@ module PrnMaps
       uploaded_layers = []
       params[:layers].each do |layer|
         uploaded_file = s3_proxy.upload_pending_event_file(
-          params[:event_name],
+          event_name,
+          upload_version_num,
           layer['filename'],
           layer['tempfile']
         )
         uploaded_layers << uploaded_file
       end
+
+      # after successful file upload, make sure we update the known version
+      # so the next upload can prefix properly
+      s3_proxy.update_pending_upload_version(event_name, upload_version_num)
 
       result = { layers: uploaded_layers, metadata: uploaded_metadata }
       [201, json(result)]
