@@ -123,24 +123,46 @@ module PrnMaps
 
     # TODO: add fragment caching here to avoid hitting s3 all the time
     def get_event_layers(event_name, path_suffix)
-      version_data = {}
       layer_prefix = "events/#{event_name}/layers/#{path_suffix}/v"
       layer_objects = bucket.objects(prefix: layer_prefix, delimiter: '')
-      layer_objects.each do |obj|
-        version_num = layer_version(obj.key)
-        version_layers = version_data[version_num] ||= []
-        version_layers << {
-          name: layer_name(obj.key),
-          url: bucket_url_generator(obj.key)
-        }
+      version_data = build_event_layer_version_data(layer_objects)
+      sorted_version_data = sorted_version_data(version_data)
+      version_event_layers(sorted_version_data, version_data)
+    end
+
+    # these formatting methods below look like a class to extract
+    def build_event_layer_version_data(layer_objects)
+      {}.tap do |version_data|
+        layer_objects.each do |obj|
+          version_num = layer_version(obj.key)
+          version_num_data = version_data[version_num] ||= { layers: [] }
+          if layer_name(obj.key) == 'metadata'
+            version_num_data[:metadata_url] = bucket_url_generator(obj.key)
+            next
+          end
+          version_num_data[:layers] << {
+            name: layer_name(obj.key),
+            url: bucket_url_generator(obj.key)
+          }
+        end
       end
-      # client request to have the lastest version data first
-      sorted_version_keys = version_data.keys.sort do |x,y|
+    end
+
+    # client request to have the lastest version data first
+    def sorted_version_data(version_data)
+      version_data.keys.sort do |x, y|
         y[1..-1].to_i <=> x[1..-1].to_i
       end
+    end
+
+    def version_event_layers(version_keys, version_data)
       [].tap do |result_layers|
-        sorted_version_keys.each do |ver_key|
-          result_layers << { version: ver_key, layers: version_data[ver_key] }
+        version_keys.each do |ver_key|
+          result_layers << {
+            version: ver_key,
+            metadata_url: version_data[ver_key][:metadata_url],
+            layers: version_data[ver_key][:layers]
+          }
         end
       end
     end
