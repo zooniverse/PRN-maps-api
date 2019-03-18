@@ -9,6 +9,8 @@ spec:
   selector:
     matchLabels:
       app: prn-maps-api
+  strategy:
+      type: RollingUpdate
   template:
     metadata:
       labels:
@@ -18,8 +20,14 @@ spec:
     spec:
       containers:
         - name: prn-maps-api
-          image: zooniverse/prn-maps-api:latest
+          image: zooniverse/prn-maps-api
           imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 10
           ports:
             - containerPort: 80
           env:
