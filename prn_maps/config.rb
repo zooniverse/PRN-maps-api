@@ -17,7 +17,7 @@ module PrnMaps
     end
 
     def self.rollbar_token
-      ENV['ROLLBAR_TOKEN']
+      ENV['ROLLBAR_ACCESS_TOKEN']
     end
   end
 end
