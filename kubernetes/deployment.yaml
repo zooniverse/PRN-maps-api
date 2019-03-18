@@ -49,11 +49,11 @@ spec:
                   name: prn-maps-api
                   key: basic_auth_password
             - name: AWS_ACCESS_KEY_ID
-               valueFrom:
+              valueFrom:
                 secretKeyRef:
                   name: prn-maps-api
                   key: aws_key_id
-            - name: "AWS_SECRET_ACCESS_KEY"
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: prn-maps-api
