@@ -50,15 +50,14 @@ module PrnMaps
       get_event_layers(event_name, 'pending')
     end
 
-    def approve_pending_event_layers(event_name)
+    def approve_pending_event_layers(event_name, version)
       bucket_path_prefix = "events/#{event_name}/layers"
-      approved_bucket_path_prefix = "#{bucket_path_prefix}/approved"
+      approved_bucket_path_prefix = "#{bucket_path_prefix}/approved/#{version}"
       [].tap do |layers|
-        pending_objects = bucket.objects(
-          prefix: "#{bucket_path_prefix}/pending/",
-          delimiter: '/'
+        pending_version_objects = find_pending_version_objects(
+          "#{pending_bucket_path_prefix(event_name)}/#{version}/"
         )
-        pending_objects.each do |obj|
+        pending_version_objects.each do |obj|
           move_target_key = "#{approved_bucket_path_prefix}/#{layer_name_with_extension(obj.key)}"
           obj.move_to(
             bucket: BUCKET,
@@ -165,6 +164,10 @@ module PrnMaps
           }
         end
       end
+    end
+
+    def find_pending_version_objects(pending_versions_prefix)
+      bucket.objects( prefix: pending_versions_prefix, delimiter: '/')
     end
 
     def pending_bucket_path_prefix(event_name)

@@ -33,7 +33,7 @@ GET `/layers/${event_name}`
 GET `/pending/layers/${event_name}`
   + Show the pending data layers for a known event name
 
-POST `/pending/layers/${event_name}/approve`
+POST `/pending/layers/${event_name}/approve/:${version}`
   + Approve and publish all the pending data layers for a known event name.
 
 POST `/upload/layers/${event_name}`
