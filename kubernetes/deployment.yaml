@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prn-maps-api
+  labels:
+    app: prn-maps-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prn-maps-api
+  template:
+    metadata:
+      labels:
+        app: prn-maps-api
+      annotations:
+        iam.amazonaws.com/role: prn-maps-api-s3-prn-bucket-access
+    spec:
+      containers:
+        - name: prn-maps-api
+          image: zooniverse/prn-maps-api:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: RACK_ENV
+              value: "production"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: ROLLBAR_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: prn-maps-api
+                  key: rollbar_token
+            - name: BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: prn-maps-api
+                  key: basic_auth_username
+            - name: BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prn-maps-api
+                  key: basic_auth_password

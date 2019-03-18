@@ -18,5 +18,5 @@ ADD ./docker/supervisord.conf /etc/supervisor/conf.d/prn-maps-api.conf
 
 RUN (git log --format="%H" -n 1 > public/commit_id.txt)
 
-EXPOSE 3000
+EXPOSE 80
 ENTRYPOINT /app/docker/start.sh
