@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prn-maps-api
+  labels:
+    app: prn-maps-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prn-maps-api
+  template:
+    metadata:
+      labels:
+        app: prn-maps-api
+    spec:
+      containers:
+        - name: prn-maps-api
+          image: zooniverse/prn-maps-api:latest
+          ports:
+            - containerPort: 80
