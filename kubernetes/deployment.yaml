@@ -15,8 +15,6 @@ spec:
     metadata:
       labels:
         app: prn-maps-api
-      annotations:
-        iam.amazonaws.com/role: prn-maps-api-s3-prn-bucket-access
     spec:
       containers:
         - name: prn-maps-api
@@ -50,3 +48,13 @@ spec:
                 secretKeyRef:
                   name: prn-maps-api
                   key: basic_auth_password
+            - name: AWS_ACCESS_KEY_ID
+               valueFrom:
+                secretKeyRef:
+                  name: prn-maps-api
+                  key: aws_key_id
+            - name: "AWS_SECRET_ACCESS_KEY"
+              valueFrom:
+                secretKeyRef:
+                  name: prn-maps-api
+                  key: aws_secret
