@@ -24,7 +24,7 @@ pipeline {
       steps {
         script {
           def dockerRepoName = 'zooniverse/prn-maps-api'
-          def dockerImageName = "${dockerRepoName}:latest"
+          def dockerImageName = "${dockerRepoName}:${GIT_COMMIT}"
           def newImage = null
 
           newImage = docker.build(dockerImageName)
@@ -38,8 +38,7 @@ pipeline {
       when { branch 'master' }
       agent any
       steps {
-        sh "kubectl apply -f kubernetes/deployment.yaml"
-        sh "kubectl apply -f kubernetes/service.yaml"
+        sh "kubectl set image -f kubernetes/deployment.yaml prn-maps-api=zooniverse/prn-maps-api:${GIT_COMMIT}"
       }
     }
   }
