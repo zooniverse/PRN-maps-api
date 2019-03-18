@@ -33,8 +33,9 @@ GET `/layers/${event_name}`
 GET `/pending/layers/${event_name}`
   + Show the pending data layers for a known event name
 
-POST `/pending/layers/${event_name}/approve/:${version}`
+POST `/pending/layers/${event_name}/approve/${version}`
   + Approve and publish all the pending data layers for a known event name.
+  + You must supply the `event_name` and `version` values in the route.
 
 POST `/upload/layers/${event_name}`
   + Upload a list of layer files and one metadata files to describe the list of layers. Use `multipart/form-data` encoding to upload the files
