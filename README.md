@@ -22,8 +22,8 @@ This information will be used by the mapping UI interface https://github.com/zoo
 GET `/events`
   + List all known tPRN event manifests available in s3, including the manifest name and URL for retrieval via HTTPS
 
-GET `/manifests/${event_name}`
-  + Show the manifest metadata for a known event name
+GET `/events/${event_name}`
+  + Show the event metadata for a known event name
 
 GET `/layers/${event_name}`
   + Show the data layers for a known event name

@@ -12,11 +12,11 @@ module PrnMaps
       json(s3_proxy.events)
     end
 
-    options '/manifests/:event_name' do
+    options '/events/:event_name' do
       options_req
     end
 
-    get '/manifests/:event_name' do
+    get '/events/:event_name' do
       json(s3_proxy.event_manifest(params[:event_name]))
     end
 
