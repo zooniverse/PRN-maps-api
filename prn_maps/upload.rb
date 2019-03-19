@@ -125,7 +125,11 @@ module PrnMaps
       end
 
       def metadata_json
-        JSON.parse(metadata_upload[:tempfile].read)
+        temp_file_body = metadata_upload[:tempfile].read
+        # ensure we rewind the file here as an unwound file
+        # causes very slow s3 upload speeds
+        metadata_upload[:tempfile].rewind
+        JSON.parse(temp_file_body)
       end
 
       def validate_upload_file_types
