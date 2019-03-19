@@ -22,14 +22,18 @@ module PrnMaps
       options_req
     end
 
-    # This moves all the pending layers to approve event bucket path
+    # This moves all the event version's pending layers
+    # to the versions approved bucket path
     post '/layers/:event_name/approve/:version' do
-      json(
-        s3_proxy.approve_pending_event_layers(
-          params[:event_name],
-          params[:version]
+      [
+        201,
+        json(
+          s3_proxy.approve_pending_event_layers(
+            params[:event_name],
+            params[:version]
+          )
         )
-      )
+      ]
     end
   end
 end
