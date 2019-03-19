@@ -27,7 +27,8 @@ pipeline {
       when { branch 'master' }
       agent any
       steps {
-        sh "kubectl set image -f kubernetes/deployment.yaml prn-maps-api=zooniverse/prn-maps-api:${GIT_COMMIT}"
+        sh "kubectl apply -f kubernetes/"
+        sh "sed 's/__IMAGE_TAG__/${GIT_COMMIT}/g' kubernetes/deployment.tmpl | kubectl apply -f -"
       }
     }
   }

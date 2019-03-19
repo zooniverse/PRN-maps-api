@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: prn-maps-api
-          image: zooniverse/prn-maps-api
+          image: zooniverse/prn-maps-api:__IMAGE_TAG__
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
