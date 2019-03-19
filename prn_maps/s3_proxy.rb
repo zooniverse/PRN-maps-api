@@ -8,6 +8,7 @@ module PrnMaps
     MANIFEST_NAME_REGEX = %r{.+/(.+).json}.freeze
     LAYER_NAME_REGEX = %r{.+/(.+)\.(.+)}.freeze
     LAYER_VERSION_REGEX = %r{.+\/(v\d+)\/.+\..+}.freeze
+    METADATA_LAYER_REGEX = %r{.+\/.+metadata\.json}.freeze
     S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
@@ -111,6 +112,10 @@ module PrnMaps
       LAYER_VERSION_REGEX.match(path)[1]
     end
 
+    def metadata_layer?(path)
+      !!METADATA_LAYER_REGEX.match(path)
+    end
+
     def layer_name_with_extension(path)
       layer_name_match = LAYER_NAME_REGEX.match(path)
       "#{layer_name_match[1]}.#{layer_name_match[2]}"
@@ -135,7 +140,7 @@ module PrnMaps
         layer_objects.each do |obj|
           version_num = layer_version(obj.key)
           version_num_data = version_data[version_num] ||= { layers: [] }
-          if layer_name(obj.key) == 'metadata'
+          if metadata_layer?(obj.key)
             version_num_data[:metadata_url] = bucket_url_generator(obj.key)
             next
           end
