@@ -17,7 +17,7 @@ module PrnMaps
     # upload the submitted layer files to s3
     post '/layers/:event_name' do
       event_name = params[:event_name]
-      errors = validate_correct_files
+      errors = validate_correct_files_exist
       return [400, json(errors: errors)] unless errors.empty?
 
       validator = UploadValidator.new(params[:metadata], params[:layers])
@@ -60,7 +60,7 @@ module PrnMaps
 
     private
 
-    def validate_correct_files
+    def validate_correct_files_exist
       [].tap do |errors|
         metadata_upload = params[:metadata]
         unless metadata_upload.is_a?(Sinatra::IndifferentHash)
@@ -137,10 +137,18 @@ module PrnMaps
       end
 
       def valid_metadata_file?
-        valid_file = metadata_upload['type'] == self.class.metadata_file_type
-        unless valid_file
+        valid_file = true
+        invalid_file_type = metadata_upload['type'] != self.class.metadata_file_type
+        invalid_file_name = !metadata_upload['filename'].include?('metadata')
+
+        if invalid_file_type
+          valid_file = false
           @errors << "file type must be #{self.class.metadata_file_type}"
+        elsif invalid_file_name
+          valid_file = false
+          @errors << 'file name must contain metadata'
         end
+
         valid_file
       end
 

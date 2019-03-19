@@ -183,6 +183,19 @@ describe 'uploading layer files' do
     end
 
     describe 'when metadata upload is an invalid' do
+      it 'should ensure the metadata file is appropriately named' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
+          'spec/test_files/incorrectly_named_meta_data.json'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+
+        last_response.body.must_equal(
+          error_formatting('Invalid metadata - file name must contain metadata')
+        )
+      end
+
       it 'should respond with useful schema errors' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],
@@ -200,7 +213,7 @@ describe 'uploading layer files' do
       it 'should handle an invalid json file' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],
-          'spec/test_files/layer_1.csv'
+          'spec/test_files/invalid_layer_1_metadata.csv'
         )
         post '/layers/test_layer', payload
         last_response.status.must_equal(422)

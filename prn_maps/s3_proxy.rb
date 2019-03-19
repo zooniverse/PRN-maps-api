@@ -8,7 +8,7 @@ module PrnMaps
     MANIFEST_NAME_REGEX = %r{.+/(.+).json}.freeze
     LAYER_NAME_REGEX = %r{.+/(.+)\.(.+)}.freeze
     LAYER_VERSION_REGEX = %r{.+\/(v\d+)\/.+\..+}.freeze
-    METADATA_LAYER_REGEX = %r{.+\/.+metadata\.json}.freeze
+    METADATA_LAYER_REGEX = %r{.+\/.+metadata.?\.json}.freeze
     S3_URL_SUFFIX = 's3.amazonaws.com'
 
     attr_reader :s3
