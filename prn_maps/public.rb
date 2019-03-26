@@ -33,9 +33,12 @@ module PrnMaps
     end
 
     get '/layers/:event_name/:layer_version/:layer_name' do
-      layer_path = "#{params[:layer_version]}/#{params[:layer_name]}"
       json(
-        s3_proxy.filter_approved_event_layers(params[:event_name], layer_path)
+        s3_proxy.filter_approved_event_layers(
+          params[:event_name],
+          params[:layer_version],
+          params[:layer_name]
+        )
       )
     end
 
