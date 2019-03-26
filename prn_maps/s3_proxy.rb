@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'aws-sdk-s3'
 
 module PrnMaps
@@ -44,11 +45,20 @@ module PrnMaps
     end
 
     def approved_event_layers(event_name)
-      get_event_layers(event_name, 'approved')
+      get_event_layers(event_name, 'approved/v')
+    end
+
+    def filter_approved_event_layers(event_name, version, name)
+      get_event_layers(event_name, "approved/#{version}") do |layer_objects|
+        layer_objects.select do |layer_obj|
+          name == layer_name_with_extension(layer_obj.key) ||
+            metadata_layer?(layer_obj.key)
+        end
+      end
     end
 
     def pending_event_layers(event_name)
-      get_event_layers(event_name, 'pending')
+      get_event_layers(event_name, 'pending/v')
     end
 
     def approve_pending_event_layers(event_name, version)
@@ -127,8 +137,11 @@ module PrnMaps
 
     # TODO: add fragment caching here to avoid hitting s3 all the time
     def get_event_layers(event_name, path_suffix)
-      layer_prefix = "events/#{event_name}/layers/#{path_suffix}/v"
+      layer_prefix = "events/#{event_name}/layers/#{path_suffix}"
       layer_objects = bucket.objects(prefix: layer_prefix, delimiter: '')
+
+      layer_objects = yield layer_objects if block_given?
+
       version_data = build_event_layer_version_data(layer_objects)
       sorted_version_data = sorted_version_data(version_data)
       version_event_layers(sorted_version_data, version_data)
@@ -172,7 +185,7 @@ module PrnMaps
     end
 
     def find_pending_version_objects(pending_versions_prefix)
-      bucket.objects( prefix: pending_versions_prefix, delimiter: '/')
+      bucket.objects(prefix: pending_versions_prefix, delimiter: '/')
     end
 
     def pending_bucket_path_prefix(event_name)

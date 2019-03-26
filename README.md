@@ -28,6 +28,9 @@ GET `/events/${event_name}`
 GET `/layers/${event_name}`
   + Show the data layers for a known event name
 
+GET `/layers/${event_name}/${version}/${layer_name}
+  + Show the data layer for a known event that matches the version and layer name paths
+
 ##### Protected end points (basic auth headers required)
 
 GET `/pending/layers/${event_name}`

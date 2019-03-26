@@ -28,6 +28,17 @@ module PrnMaps
       json(s3_proxy.approved_event_layers(params[:event_name]))
     end
 
+    options '/layers/:event_name/:layer_version/:layer_name' do
+      options_req
+    end
+
+    get '/layers/:event_name/:layer_version/:layer_name' do
+      layer_path = "#{params[:layer_version]}/#{params[:layer_name]}"
+      json(
+        s3_proxy.approved_event_layer(params[:event_name], layer_path)
+      )
+    end
+
     get '/*' do
       json(health: 'ok', version: self.class.version, commit_id: commit_id)
     end
