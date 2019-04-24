@@ -65,3 +65,14 @@ Using docker and docker-compose
 Using your own ruby install
 `bundle install`
 `bundle exec puma -C docker/puma.rb` to run the API server in development mode
+
+# Running tests
+
+Using docker
+`docker-compose run --rm --entrypoint="/bin/bash -c" prn_maps_api "ruby -Ilib -e 'ARGV.each { |f| require f }' ./spec/*_spec.rb"`
+
+Manually via your own ruby install
+`ruby -Ilib -e 'ARGV.each { |f| require f }' ./spec/*_spec.rb`
+
+Or use autotest for constant feedback on file system changes
+`autotest`
