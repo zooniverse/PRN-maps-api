@@ -78,7 +78,7 @@ module PrnMaps
       attr_reader :metadata_upload, :layers_upload
 
       def self.required_keys
-        @required_keys ||= %w[file_name created_at]
+        @required_keys ||= %w[file_name created_at description legend]
       end
 
       def self.metadata_file_type

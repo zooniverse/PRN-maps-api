@@ -182,7 +182,7 @@ describe 'uploading layer files' do
       end
     end
 
-    describe 'when metadata upload is an invalid' do
+    describe 'when metadata upload is invalid' do
       it 'should ensure the metadata file is appropriately named' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],
@@ -205,7 +205,7 @@ describe 'uploading layer files' do
         last_response.status.must_equal(422)
         last_response.body.must_equal(
           error_formatting(
-            'Invalid metadata - Layer: 0 missing attributes: file_name'
+            'Invalid metadata - Layer: 0 missing attributes: file_name,description,legend'
           )
         )
       end

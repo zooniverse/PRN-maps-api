@@ -1,6 +1,8 @@
 {
 	"layers": [{
 		"file_name": "invalid_layer_type.txt",
-		"created_at": "2018-07-07T15:55:00.511Z"
+		"created_at": "2018-07-07T15:55:00.511Z",
+		"description": "invalie layer type",
+		"legend": []
 	}]
 }
