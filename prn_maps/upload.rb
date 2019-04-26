@@ -109,6 +109,9 @@ module PrnMaps
         validate_uploaded_counts
         return false if @errors.length.positive? # fail as fast as we can
 
+        validate_aoi_description
+        return false if @errors.length.positive? # fail as fast as we can
+
         validate_uploaded_layers
 
         @errors.empty?
@@ -172,6 +175,12 @@ module PrnMaps
         return if uniq_files_match
 
         @errors << 'file contains non unique entries'
+      end
+
+      def validate_aoi_description
+        unless metadata_json.key?('AOI')
+          @errors << 'supply an AOI attribute value that describs the layer data geographically (Area Of Interest)'
+        end
       end
 
       def validate_uploaded_layers
