@@ -28,9 +28,33 @@ module PrnMaps
       # get the known upload version state for this event
       upload_version_num = s3_proxy.next_version(event_name)
 
-      # seems like this is a bottle neck running each one
+      # seems like uploading lots of files may be a bottle neck
       # will have to look at optimizing these s3 calls
       # maybe? https://github.com/grosser/parallel
+
+      # add uploaded_at data to the temp file, urgh, i'm a bad person
+      # adding an s3_proxy method to upload data object vs file input
+      # would be the better solution
+      tmp_metadata_file = params[:metadata]['tempfile']
+      # rewind the file so it can be read...again
+      tmp_metadata_file.rewind
+      tmp_metadata = tmp_metadata_file.read
+      # add the uploaded_at attribute to the json
+      metadata_json = JSON.parse(tmp_metadata)
+      uploaded_at_time_stamp = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
+      metadata_json['uploaded_at'] = uploaded_at_time_stamp
+
+      # rewind the file so we can overwrite it with new pretty json
+      tmp_metadata_file.rewind
+      tmp_metadata_file.write(
+        JSON.pretty_generate(metadata_json)
+      )
+      tmp_metadata_file.flush
+
+      # ensure we rewind the file here as an unwound file
+      # causes very slow s3 upload speeds
+      tmp_metadata_file.rewind
+
       uploaded_metadata = s3_proxy.upload_pending_event_file(
         event_name,
         upload_version_num,
@@ -128,11 +152,9 @@ module PrnMaps
       end
 
       def metadata_json
-        temp_file_body = metadata_upload[:tempfile].read
-        # ensure we rewind the file here as an unwound file
-        # causes very slow s3 upload speeds
-        metadata_upload[:tempfile].rewind
-        JSON.parse(temp_file_body)
+        @metadata_json ||= JSON.parse(
+          metadata_upload[:tempfile].read
+        )
       end
 
       def validate_upload_file_types
