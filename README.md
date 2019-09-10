@@ -5,15 +5,16 @@ API for mapping the Planetary Response Network (tPRN) data results via https://g
 This API is a proxy around s3 files that have been created for each tPRN activation event.
 
 Each Event comprises the following steps:
-1. A JSON manifest describing each tPRN event will be created and stored in s3, https://github.com/camallen/PRN-scripts/tree/add_manifest_pipeline/pipeline
+1. A JSON manifest describing each tPRN event will be created and stored in s3
+    + This manifest is served by this API to configure the mapping UI
+    + See https://github.com/zooniverse/tprn-data-processing/tree/master/event_manifest for details on setting up a manifest
 0. Before and after imagery of a PRN even is pushed to a Zooniverse project
 0. Volunteers classify the uploaded data
 0. Raw classification data is collated and archived to a known s3 path
-0. IBCC code is run over the collated data and with all the layer results published to known s3 paths
+0. IBCC code is run over the collated data
+0. The resulting layer data is uploaded via the API to be served to the mapping UI
 
-This API will fetch the event information stored in known s3 locations and returned as JSON data.
-
-This information will be used by the mapping UI interface https://github.com/zooniverse/prn-maps for visualizing the results of tPRN event
+This API will fetch the event information stored in known s3 locations (as setup in the event manifest) and served as JSON data content types. This json data will be used by the mapping UI interface https://github.com/zooniverse/prn-maps for visualizing the results of tPRN event.
 
 # Routes
 
