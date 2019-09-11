@@ -201,7 +201,7 @@ module PrnMaps
 
       def validate_aoi_description
         unless metadata_json.key?('AOI')
-          @errors << 'supply an AOI attribute value that describs the layer data geographically (Area Of Interest)'
+          @errors << 'supply an AOI attribute value that describes the layer data geographically (Area Of Interest)'
         end
       end
 

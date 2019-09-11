@@ -205,7 +205,7 @@ describe 'uploading layer files' do
         last_response.status.must_equal(422)
         last_response.body.must_equal(
           error_formatting(
-            'Invalid metadata - supply an AOI attribute value that describs the layer data geographically (Area Of Interest)'
+            'Invalid metadata - supply an AOI attribute value that describes the layer data geographically (Area Of Interest)'
           )
         )
       end
