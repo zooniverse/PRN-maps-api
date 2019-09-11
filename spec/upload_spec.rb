@@ -210,6 +210,20 @@ describe 'uploading layer files' do
         )
       end
 
+      it 'should have a top level created_at key' do
+        payload = files_payload(
+          ['spec/test_files/layer_1.csv'],
+          'spec/test_files/missing_created_at_metadata.json'
+        )
+        post '/layers/test_layer', payload
+        last_response.status.must_equal(422)
+        last_response.body.must_equal(
+          error_formatting(
+            'Invalid metadata - supply a created_at attribute value that describes the upload creation time'
+          )
+        )
+      end
+
       it 'should respond with useful schema errors' do
         payload = files_payload(
           ['spec/test_files/layer_1.csv'],

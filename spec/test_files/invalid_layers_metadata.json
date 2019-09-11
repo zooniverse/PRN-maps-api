@@ -1,13 +1,12 @@
 {
 	"AOI": "Test AOI",
+	"created_at": "2018-07-07T15:55:00.511Z",
 	"layers": [{
 		"file_name": "layer_1.csv",
-		"created_at": "2018-07-07T15:55:00.511Z",
 		"description": "layer 1",
 		"legend": []
 	},{
 		"file_name": "layer_1.csv",
-		"created_at": "2018-07-07T15:55:00.511Z",
 		"description": "layer 1",
 		"legend": []
 	}]

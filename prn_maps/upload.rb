@@ -101,8 +101,15 @@ module PrnMaps
     class UploadValidator
       attr_reader :metadata_upload, :layers_upload
 
-      def self.required_keys
-        @required_keys ||= %w[file_name created_at description legend]
+      def self.required_layer_keys
+        @required_layer_keys ||= %w[file_name description legend]
+      end
+
+      def self.required_metadata
+        @required_metadata ||= {
+          'AOI' => 'supply an AOI attribute value that describes the layer data geographically (Area Of Interest)',
+          'created_at' => 'supply a created_at attribute value that describes the upload creation time'
+        }
       end
 
       def self.metadata_file_type
@@ -133,7 +140,7 @@ module PrnMaps
         validate_uploaded_counts
         return false if @errors.length.positive? # fail as fast as we can
 
-        validate_aoi_description
+        validate_upload_metadata
         return false if @errors.length.positive? # fail as fast as we can
 
         validate_uploaded_layers
@@ -199,9 +206,11 @@ module PrnMaps
         @errors << 'file contains non unique entries'
       end
 
-      def validate_aoi_description
-        unless metadata_json.key?('AOI')
-          @errors << 'supply an AOI attribute value that describes the layer data geographically (Area Of Interest)'
+      def validate_upload_metadata
+        self.class.required_metadata.each do |metadata_key, error_message|
+          unless metadata_json.key?(metadata_key)
+            @errors << error_message
+          end
         end
       end
 
@@ -218,7 +227,7 @@ module PrnMaps
 
       # validate the metadata has the required schema
       def validate_layer_metadata(layer_metadata, layer_num)
-        missing_metadata = self.class.required_keys - layer_metadata.keys
+        missing_metadata = self.class.required_layer_keys - layer_metadata.keys
         return if missing_metadata.empty?
 
         @errors << layer_error_msg(
