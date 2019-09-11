@@ -1,3 +1,4 @@
 .ruby-version
 .ruby-gemset
 public/*
+.DS_Store
