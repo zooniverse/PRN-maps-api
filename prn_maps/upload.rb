@@ -44,22 +44,20 @@ module PrnMaps
       uploaded_at_time_stamp = Time.now.strftime('%Y-%m-%dT%H:%M:%S%z')
       metadata_json['uploaded_at'] = uploaded_at_time_stamp
 
-      # rewind the file so we can overwrite it with new pretty json
-      tmp_metadata_file.rewind
+      # create a new temp file for the modified metadata json
+      tmp_metadata_file = Tempfile.new('upload_metadata')
       tmp_metadata_file.write(
         JSON.pretty_generate(metadata_json)
       )
-      tmp_metadata_file.flush
-
-      # ensure we rewind the file here as an unwound file
-      # causes very slow s3 upload speeds
+      # ensure we rewind the file here to flush buffered output
+      # and an unwound file causes very slow s3 upload speeds
       tmp_metadata_file.rewind
 
       uploaded_metadata = s3_proxy.upload_pending_event_file(
         event_name,
         upload_version_num,
         params[:metadata]['filename'],
-        params[:metadata]['tempfile']
+        tmp_metadata_file
       )
 
       # does the metadata file have to conform to a set schema?
