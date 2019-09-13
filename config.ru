@@ -6,7 +6,7 @@ require './prn_maps/config.rb'
 require './prn_maps/public.rb'
 require './prn_maps/pending.rb'
 require './prn_maps/upload.rb'
-require './prn_maps/revert_approved.rb'
+require './prn_maps/revert.rb'
 
 require 'pry' if PrnMaps::Config.local?
 
@@ -22,5 +22,5 @@ run Rack::URLMap.new(
   '/' => PrnMaps::Public,
   '/pending' => PrnMaps::Pending,
   '/upload' => PrnMaps::Upload,
-  '/approved' => PrnMaps::RevertApproved
+  '/approved' => PrnMaps::Revert
 )
