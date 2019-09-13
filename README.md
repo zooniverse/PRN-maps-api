@@ -29,16 +29,20 @@ GET `/events/${event_name}`
 GET `/layers/${event_name}`
   + Show the data layers for a known event name
 
-GET `/layers/${event_name}/${version}/${layer_name}
+GET `/layers/${event_name}/${version}/${layer_name}`
   + Show the data layer for a known event that matches the version and layer name paths
 
 ##### Protected end points (basic auth headers required)
+
+POST `/approved/layers/${event_name}/revert/${version}`
+  + Revert the approved data layers for a known version and event name.
+  + You must supply the `event_name` and `version` values in the route.
 
 GET `/pending/layers/${event_name}`
   + Show the pending data layers for a known event name
 
 POST `/pending/layers/${event_name}/approve/${version}`
-  + Approve and publish all the pending data layers for a known event name.
+  + Approve and publish the pending data layers for a known version and event name.
   + You must supply the `event_name` and `version` values in the route.
 
 POST `/upload/layers/${event_name}`
