@@ -4,19 +4,19 @@ require_relative 'api'
 require_relative 'options_basic_auth'
 
 module PrnMaps
-  class RevertApproved < Api
+  class Revert < Api
     use OptionsBasicAuth, 'Protected Area' do |username, password|
       username == ENV.fetch('BASIC_AUTH_USERNAME', 'prn') &&
         password == ENV.fetch('BASIC_AUTH_PASSWORD', 'api')
     end
 
-    options '/layers/:event_name/revert_approved/:version' do
+    options '/layers/:event_name/revert/:version' do
       options_req
     end
 
     # This moves all the event version's approved layers
     # to the versions pending bucket path
-    post '/layers/:event_name/revert_approved/:version' do
+    post '/layers/:event_name/revert/:version' do
       [
         201,
         json(
