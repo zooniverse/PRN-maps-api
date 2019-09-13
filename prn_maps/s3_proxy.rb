@@ -65,18 +65,31 @@ module PrnMaps
       bucket_path_prefix = "events/#{event_name}/layers"
       approved_bucket_path_prefix = "#{bucket_path_prefix}/approved/#{version}"
       [].tap do |layers|
-        pending_version_objects = find_pending_version_objects(
+        pending_version_objects = find_version_objects(
           "#{pending_bucket_path_prefix(event_name)}/#{version}/"
         )
         pending_version_objects.each do |obj|
-          move_target_key = "#{approved_bucket_path_prefix}/#{layer_name_with_extension(obj.key)}"
-          obj.move_to(
-            bucket: BUCKET,
-            key: move_target_key
-          )
+          moved_obj_path = move_s3_object(obj, approved_bucket_path_prefix)
           layers << {
-            name: layer_name(move_target_key),
-            url: bucket_url_generator(move_target_key)
+            name: layer_name(moved_obj_path),
+            url: bucket_url_generator(moved_obj_path)
+          }
+        end
+      end
+    end
+
+    def revert_approved_event_layers(event_name, version)
+      bucket_path_prefix = "events/#{event_name}/layers"
+      pending_bucket_path_prefix = "#{pending_bucket_path_prefix(event_name)}/#{version}"
+      [].tap do |layers|
+        approved_version_objects = find_version_objects(
+          "#{bucket_path_prefix}/approved/#{version}"
+        )
+        approved_version_objects.each do |obj|
+          moved_obj_path = move_s3_object(obj, pending_bucket_path_prefix)
+          layers << {
+            name: layer_name(moved_obj_path),
+            url: bucket_url_generator(moved_obj_path)
           }
         end
       end
@@ -184,8 +197,8 @@ module PrnMaps
       end
     end
 
-    def find_pending_version_objects(pending_versions_prefix)
-      bucket.objects(prefix: pending_versions_prefix, delimiter: '/')
+    def find_version_objects(versions_prefix)
+      bucket.objects(prefix: versions_prefix, delimiter: '/')
     end
 
     def pending_bucket_path_prefix(event_name)
@@ -197,6 +210,18 @@ module PrnMaps
         bucket,
         pending_bucket_path_prefix(event_name)
       )
+    end
+
+    # move the object to the target path prefix
+    # and return the path the object was moved to
+    def move_s3_object(obj, target_path_prefix)
+      move_target_key = "#{target_path_prefix}/#{layer_name_with_extension(obj.key)}"
+      obj.move_to(
+        bucket: BUCKET,
+        key: move_target_key
+      )
+
+      move_target_key
     end
 
     class UploadVersion
