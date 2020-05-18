@@ -19,6 +19,13 @@ spec:
       containers:
         - name: prn-maps-api
           image: zooniverse/prn-maps-api:__IMAGE_TAG__
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "100Mi"
+              cpu: "500m"
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
