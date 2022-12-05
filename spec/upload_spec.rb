@@ -41,7 +41,7 @@ describe 'uploading layer files' do
   describe 'without credentials' do
     it 'should request authentication' do
       post '/layers/test_layer', {}
-      last_response.status.must_equal(401)
+      expect(last_response.status).must_equal(401)
     end
   end
 
@@ -49,7 +49,7 @@ describe 'uploading layer files' do
     it 'should request authentication' do
       authorize 'prn', 'invalid'
       post '/layers/test_layer', {}
-      last_response.status.must_equal(401)
+      expect(last_response.status).must_equal(401)
     end
   end
 
@@ -67,9 +67,9 @@ describe 'uploading layer files' do
       mock_s3_proxy(metadata, layers) do
         post '/layers/test_layer', payload
       end
-      last_response.status.must_equal(201)
+      expect(last_response.status).must_equal(201)
       result = { layers: ['layer_1.csv'], metadata: 'layer_1_metadata.json' }
-      last_response.body.must_equal(result.to_json)
+      expect(last_response.body).must_equal(result.to_json)
     end
 
     it 'should accept one multiple layer files' do
@@ -79,12 +79,12 @@ describe 'uploading layer files' do
       mock_s3_proxy(metadata, layers) do
         post '/layers/test_layer', payload
       end
-      last_response.status.must_equal(201)
+      expect(last_response.status).must_equal(201)
       result = {
         layers: ['layer_1.csv', 'layer_2.csv'],
         metadata: 'layer_1_and_2_metadata.json'
       }
-      last_response.body.must_equal(result.to_json)
+      expect(last_response.body).must_equal(result.to_json)
     end
 
     it "should upload the files to event's pending s3 path" do
@@ -94,7 +94,7 @@ describe 'uploading layer files' do
       upload_args = ['test_layer', Integer, String, Tempfile]
       mock_s3_proxy(metadata, upload_layers, upload_args) do |s3_proxy|
         post '/layers/test_layer', payload
-        s3_proxy.verify.must_equal(true)
+        expect(s3_proxy.verify).must_equal(true)
       end
     end
 
@@ -113,8 +113,8 @@ describe 'uploading layer files' do
           )
         }
 
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting('Invalid metadata - file type must be text/csv')
         )
       end
@@ -132,8 +132,8 @@ describe 'uploading layer files' do
           )
         }
 
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting('Invalid metadata - file type must be application/json')
         )
       end
@@ -142,8 +142,8 @@ describe 'uploading layer files' do
     describe 'missing file paylaods' do
       it 'should reject empty payloads' do
         post '/layers/test_layer', {}
-        last_response.status.must_equal(400)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(400)
+        expect(last_response.body).must_equal(
           error_formatting(
             'You must specify a metadata file',
             'You must specify at least one layer file'
@@ -161,8 +161,8 @@ describe 'uploading layer files' do
           ]
         }
         post '/layers/test_layer', payload
-        last_response.status.must_equal(400)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(400)
+        expect(last_response.body).must_equal(
           error_formatting('You must specify a metadata file')
         )
       end
@@ -175,8 +175,8 @@ describe 'uploading layer files' do
           )
         }
         post '/layers/test_layer', payload
-        last_response.status.must_equal(400)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(400)
+        expect(last_response.body).must_equal(
           error_formatting('You must specify at least one layer file')
         )
       end
@@ -189,9 +189,9 @@ describe 'uploading layer files' do
           'spec/test_files/incorrectly_named_meta_data.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
+        expect(last_response.status).must_equal(422)
 
-        last_response.body.must_equal(
+        expect(last_response.body).must_equal(
           error_formatting('Invalid metadata - file name must contain metadata')
         )
       end
@@ -202,8 +202,8 @@ describe 'uploading layer files' do
           'spec/test_files/missing_aoi_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting(
             'Invalid metadata - supply an AOI attribute value that describes the layer data geographically (Area Of Interest)'
           )
@@ -216,8 +216,8 @@ describe 'uploading layer files' do
           'spec/test_files/missing_created_at_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting(
             'Invalid metadata - supply a created_at attribute value that describes the upload creation time'
           )
@@ -230,8 +230,8 @@ describe 'uploading layer files' do
           'spec/test_files/invalid_schema_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting(
             'Invalid metadata - Layer: 0 missing attributes: file_name,description,legend'
           )
@@ -244,8 +244,8 @@ describe 'uploading layer files' do
           'spec/test_files/invalid_layer_1_metadata.csv'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting('Invalid metadata - please lint your JSON file')
         )
       end
@@ -256,8 +256,8 @@ describe 'uploading layer files' do
           'spec/test_files/invalid_layer_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting(
             'Invalid metadata - ' \
             'Layer: 0 lists missing layer file: incorret_layer.csv'
@@ -271,8 +271,8 @@ describe 'uploading layer files' do
           'spec/test_files/unknown_layers_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
-        last_response.body.must_equal(
+        expect(last_response.status).must_equal(422)
+        expect(last_response.body).must_equal(
           error_formatting(
             'Invalid metadata - number of entries does not match the number of uploaded files'
           )
@@ -285,9 +285,9 @@ describe 'uploading layer files' do
           'spec/test_files/invalid_layers_metadata.json'
         )
         post '/layers/test_layer', payload
-        last_response.status.must_equal(422)
+        expect(last_response.status).must_equal(422)
 
-        last_response.body.must_equal(
+        expect(last_response.body).must_equal(
           error_formatting('Invalid metadata - file contains non unique entries')
         )
       end

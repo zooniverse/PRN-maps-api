@@ -36,7 +36,7 @@ describe 'approving pending layer files' do
   describe 'without credentials' do
     it 'should request authentication' do
       post "/layers/#{event_name}/approve/#{version_num}", {}
-      last_response.status.must_equal(401)
+      expect(last_response.status).must_equal(401)
     end
   end
 
@@ -44,7 +44,7 @@ describe 'approving pending layer files' do
     it 'should request authentication' do
       authorize 'prn', 'invalid'
       post "/layers/#{event_name}/approve/#{version_num}", {}
-      last_response.status.must_equal(401)
+      expect(last_response.status).must_equal(401)
     end
   end
 
@@ -54,7 +54,7 @@ describe 'approving pending layer files' do
     it "should approved the layers files to event's approved s3 path" do
       mock_s3_proxy(event_name, version_num) do |s3_proxy|
         post "/layers/#{event_name}/approve/#{version_num}", {}
-        s3_proxy.verify.must_equal(true)
+        expect(s3_proxy.verify).must_equal(true)
       end
     end
   end
