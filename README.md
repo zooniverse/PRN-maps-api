@@ -1,7 +1,7 @@
 # PRN-maps-api
 API for mapping the Planetary Response Network (tPRN) data results via https://github.com/zooniverse/prn-maps
 
-# Overview
+## Overview
 This API is a proxy around s3 files that have been created for each tPRN activation event.
 
 Each Event comprises the following steps:
@@ -16,9 +16,9 @@ Each Event comprises the following steps:
 
 This API will fetch the event information stored in known s3 locations (as setup in the event manifest) and served as JSON data content types. This json data will be used by the mapping UI interface https://github.com/zooniverse/prn-maps for visualizing the results of tPRN event.
 
-# Routes
+## Routes
 
-##### Public end points
+### Public end points
 
 GET `/events`
   + List all known tPRN event manifests available in s3, including the manifest name and URL for retrieval via HTTPS
@@ -32,7 +32,7 @@ GET `/layers/${event_name}`
 GET `/layers/${event_name}/${version}/${layer_name}`
   + Show the data layer for a known event that matches the version and layer name paths
 
-##### Protected end points (basic auth headers required)
+### Protected end points (basic auth headers required)
 
 POST `/approved/layers/${event_name}/revert/${version}`
   + Revert the approved data layers for a known version and event name.
@@ -62,19 +62,22 @@ POST `/upload/layers/${event_name}`
       }
       ```
 
-# Get started
+## Get started
 
 Using docker and docker-compose
 `docker-compose up`
+
+or get a shell via
+`docker-compose run --rm prn_maps_api bash`
 
 Using your own ruby install
 `bundle install`
 `bundle exec puma -C docker/puma.rb` to run the API server in development mode
 
-# Running tests
+## Running tests
 
 Using docker
-`docker-compose run --rm --entrypoint="/bin/bash -c" prn_maps_api "ruby -Ilib -e 'ARGV.each { |f| require f }' ./spec/*_spec.rb"`
+`docker-compose run --rm prn_maps_api ruby -Ilib -e 'ARGV.each { |f| require f }' ./spec/*_spec.rb`
 
 Manually via your own ruby install
 `ruby -Ilib -e 'ARGV.each { |f| require f }' ./spec/*_spec.rb`
