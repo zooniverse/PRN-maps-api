@@ -3,7 +3,8 @@ services:
   prn_maps_api:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      args:
+        RACK_ENV: development
     volumes:
       - ./:/app
     ports:
